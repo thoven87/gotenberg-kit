@@ -16,7 +16,7 @@ struct GokenbergKitTests {
     let logger = Logger(label: "GotenbergKitTests")
 
     private var baseOutputPath: String {
-        let subpath = "/tmp/GotenbergKitTests/\(UUID().uuidString)"
+        let subpath = "/tmp"
 
         return subpath
     }
