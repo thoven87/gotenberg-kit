@@ -20,7 +20,6 @@ jobs:
     strategy:
       matrix:
         image:
-          - "swift:5.10"
           - "swift:6.1"
         gotenberg-image:
           - "gotenberg:8"

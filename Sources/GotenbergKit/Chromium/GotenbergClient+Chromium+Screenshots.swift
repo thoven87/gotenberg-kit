@@ -5,20 +5,20 @@
 //  Created by Stevenson Michel on 4/12/25.
 //
 
-#if canImport(Darwin) || compiler(<6.0)
-    import Foundation
-#else
-    import FoundationEssentials
-#endif
-
-import NIO
 import AsyncHTTPClient
-import NIOFoundationCompat
 import Logging
+import NIO
+import NIOFoundationCompat
+
+#if canImport(Darwin) || compiler(<6.0)
+import Foundation
+#else
+import FoundationEssentials
+#endif
 
 // MARK: - HTML Screenshot Methods
 extension GotenbergClient {
-        
+
     /// Capture a screenshot of HTML content
     /// - Parameters:
     ///   - htmlContent: The HTML content as Data
@@ -33,7 +33,7 @@ extension GotenbergClient {
         waitTimeout: TimeInterval = 30
     ) async throws -> GotenbergResponse {
         logger.debug("Capturing screenshot of HTML")
-        
+
         var files: [FormFile] = [
             FormFile(
                 name: "files",
@@ -42,17 +42,19 @@ extension GotenbergClient {
                 data: htmlContent
             )
         ]
-        
+
         // Add assets
         for (filename, data) in assets {
-            files.append(FormFile(
-                name: "files",
-                filename: filename,
-                contentType: contentTypeForFilename(filename),
-                data: data
-            ))
+            files.append(
+                FormFile(
+                    name: "files",
+                    filename: filename,
+                    contentType: contentTypeForFilename(filename),
+                    data: data
+                )
+            )
         }
-        
+
         return try await sendFormRequest(
             route: "/forms/chromium/screenshot/html",
             files: files,
@@ -60,7 +62,7 @@ extension GotenbergClient {
             headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
         )
     }
-    
+
     /// Capture a screenshot of MarkDown content
     /// - Parameters:
     ///   - htmlContent: The HTML content as Data
@@ -75,7 +77,7 @@ extension GotenbergClient {
         waitTimeout: TimeInterval = 30
     ) async throws -> GotenbergResponse {
         logger.debug("Capturing screenshot of Markdown")
-        
+
         var files: [FormFile] = [
             FormFile(
                 name: "files",
@@ -84,17 +86,19 @@ extension GotenbergClient {
                 data: htmlContent
             )
         ]
-        
+
         // Add assets
         for (filename, data) in assets {
-            files.append(FormFile(
-                name: "files",
-                filename: filename,
-                contentType: contentTypeForFilename(filename),
-                data: data
-            ))
+            files.append(
+                FormFile(
+                    name: "files",
+                    filename: filename,
+                    contentType: contentTypeForFilename(filename),
+                    data: data
+                )
+            )
         }
-        
+
         return try await sendFormRequest(
             route: "/forms/chromium/screenshot/markdown",
             files: files,
@@ -102,7 +106,7 @@ extension GotenbergClient {
             headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
         )
     }
-    
+
     /// Capture a screenshot of HTML content from a string
     /// - Parameters:
     ///   - htmlString: The HTML content as a string
@@ -119,7 +123,7 @@ extension GotenbergClient {
         guard let htmlData = htmlString.data(using: .utf8) else {
             throw GotenbergError.invalidInput(message: "Failed to encode HTML string as UTF-8")
         }
-        
+
         return try await captureHTMLScreenshot(
             htmlContent: htmlData,
             assets: assets,
@@ -127,9 +131,9 @@ extension GotenbergClient {
             waitTimeout: waitTimeout
         )
     }
-    
+
     // MARK: - URL Screenshot Methods
-    
+
     /// Capture a screenshot of a URL
     /// - Parameters:
     ///   - url: The URL to capture
@@ -142,10 +146,10 @@ extension GotenbergClient {
         waitTimeout: TimeInterval = 30
     ) async throws -> GotenbergResponse {
         logger.debug("Capturing screenshot of URL: \(url.absoluteString)")
-        
+
         var values = options.formValues
         values["url"] = url.absoluteString
-        
+
         return try await sendFormRequest(
             route: "/forms/chromium/screenshot/url",
             files: [],
@@ -153,9 +157,9 @@ extension GotenbergClient {
             headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
         )
     }
-    
+
     // MARK: - Multiple URL Screenshots
-    
+
     /// Capture screenshots from multiple URLs
     /// - Parameters:
     ///   - urls: Array of URLs to capture
@@ -170,9 +174,9 @@ extension GotenbergClient {
         guard !urls.isEmpty else {
             throw GotenbergError.noURLsProvided
         }
-        
+
         logger.debug("Capturing screenshots from \(urls.count) URLs")
-        
+
         // Capture screenshots in parallel
         return try await withThrowingTaskGroup(of: (URL, GotenbergResponse).self) { group -> [URL: GotenbergResponse] in
             for url in urls {
@@ -186,20 +190,20 @@ extension GotenbergClient {
                     return (url, screenshotData)
                 }
             }
-            
+
             // Collect results
             var results = [URL: GotenbergResponse]()
             for try await (url, data) in group {
                 results[url] = data
                 logger.debug("Captured screenshot for \(url.absoluteString)")
             }
-            
+
             return results
         }
     }
-    
+
     // MARK: - Convenience Methods
-    
+
     /// Save an HTML screenshot to a file
     /// - Parameters:
     ///   - html: HTML content as a string
@@ -220,11 +224,11 @@ extension GotenbergClient {
             options: options,
             waitTimeout: waitTimeout
         )
-        
+
         try await toData(screenshot).write(to: URL(fileURLWithPath: outputPath))
         logger.info("Saved screenshot to \(outputPath)")
     }
-    
+
     /// Save a URL screenshot to a file
     /// - Parameters:
     ///   - url: The URL to capture
@@ -242,11 +246,11 @@ extension GotenbergClient {
             options: options,
             waitTimeout: waitTimeout
         )
-        
+
         try await toData(screenshot).write(to: URL(fileURLWithPath: outputPath))
         logger.info("Saved screenshot to \(outputPath)")
     }
-    
+
     /// Capture screenshots from multiple URLs and save them to files
     /// - Parameters:
     ///   - urls: Array of URLs to capture
@@ -267,9 +271,9 @@ extension GotenbergClient {
             options: options,
             waitTimeout: waitTimeout
         )
-        
+
         let fileManager = FileManager.default
-        
+
         // Create the output directory if it doesn't exist
         if !fileManager.fileExists(atPath: outputDirectory) {
             try fileManager.createDirectory(
@@ -277,33 +281,34 @@ extension GotenbergClient {
                 withIntermediateDirectories: true
             )
         }
-        
+
         // Default filename generator if none provided
-        let generateFilename: (URL) -> String = filenameGenerator ?? { url in
-            let urlString = url.absoluteString
-                .replacingOccurrences(of: "https://", with: "")
-                .replacingOccurrences(of: "http://", with: "")
-                .replacingOccurrences(of: "/", with: "_")
-                .replacingOccurrences(of: ".", with: "_")
-            
-            // Determine extension based on format option
-            let ext = (options.format?.rawValue.lowercased() ?? "png")
-            
-            return "\(urlString).\(ext)"
-        }
-        
+        let generateFilename: (URL) -> String =
+            filenameGenerator ?? { url in
+                let urlString = url.absoluteString
+                    .replacingOccurrences(of: "https://", with: "")
+                    .replacingOccurrences(of: "http://", with: "")
+                    .replacingOccurrences(of: "/", with: "_")
+                    .replacingOccurrences(of: ".", with: "_")
+
+                // Determine extension based on format option
+                let ext = (options.format?.rawValue.lowercased() ?? "png")
+
+                return "\(urlString).\(ext)"
+            }
+
         // Save each screenshot to a file
         var outputPaths = [URL: String]()
         for (url, response) in screenshots {
             let filename = generateFilename(url)
             let outputPath = (outputDirectory as NSString).appendingPathComponent(filename)
-            
+
             try await toData(response).write(to: URL(fileURLWithPath: outputPath))
             outputPaths[url] = outputPath
-            
+
             logger.debug("Saved screenshot for \(url.absoluteString) to \(outputPath)")
         }
-        
+
         logger.info("Saved \(outputPaths.count) screenshots to \(outputDirectory)")
         return outputPaths
     }

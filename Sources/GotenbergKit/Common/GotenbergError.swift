@@ -20,7 +20,7 @@ public enum GotenbergError: Error {
     case paperHeightTooSmall
     case marginTooSmall
     case pageRangeInvalid
-    
+
     public var errorDescription: String {
         switch self {
         case .noPDFsProvided:
@@ -38,9 +38,9 @@ public enum GotenbergError: Error {
         case .invalidInput(let message):
             return "Invalid input: \(message)"
         case .paperWidthTooSmall:
-            return "Paper width must be at least 1.0 inches" // 21mm
+            return "Paper width must be at least 1.0 inches"  // 21mm
         case .paperHeightTooSmall:
-            return "Paper height must be at least 1.5 inches" // 29.7mm
+            return "Paper height must be at least 1.5 inches"  // 29.7mm
         case .marginTooSmall:
             return "Margin must be at least 0 inches"
         case .pageRangeInvalid:

@@ -20,7 +20,7 @@ public struct Cookie: Codable {
     public var httpOnly: Bool?
     /// Accepted values are "Strict", "Lax" or "None".
     public var sameSite: SameSite = .none
-    
+
     public enum SameSite: String, Codable {
         case none = "None"
         case strict = "Strict"

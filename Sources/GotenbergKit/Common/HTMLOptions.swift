@@ -20,7 +20,7 @@ public struct HTMLOptions {
     public var nativePageRanges: String?
     public var headerHTML: String?
     public var footerHTML: String?
-    
+
     public init(
         paperWidth: Double? = nil,
         paperHeight: Double? = nil,
@@ -50,62 +50,62 @@ public struct HTMLOptions {
         self.headerHTML = headerHTML
         self.footerHTML = footerHTML
     }
-    
+
     var formValues: [String: String] {
         var values: [String: String] = [:]
-        
+
         if let paperWidth = paperWidth {
             values["paperWidth"] = "\(paperWidth)"
         }
-        
+
         if let paperHeight = paperHeight {
             values["paperHeight"] = "\(paperHeight)"
         }
-        
+
         if let marginTop = marginTop {
             values["marginTop"] = "\(marginTop)"
         }
-        
+
         if let marginBottom = marginBottom {
             values["marginBottom"] = "\(marginBottom)"
         }
-        
+
         if let marginLeft = marginLeft {
             values["marginLeft"] = "\(marginLeft)"
         }
-        
+
         if let marginRight = marginRight {
             values["marginRight"] = "\(marginRight)"
         }
-        
+
         if let preferCssPageSize = preferCssPageSize {
             values["preferCssPageSize"] = preferCssPageSize ? "true" : "false"
         }
-        
+
         if let printBackground = printBackground {
             values["printBackground"] = printBackground ? "true" : "false"
         }
-        
+
         if let landscape = landscape {
             values["landscape"] = landscape ? "true" : "false"
         }
-        
+
         if let scale = scale {
             values["scale"] = "\(scale)"
         }
-        
+
         if let nativePageRanges = nativePageRanges {
             values["nativePageRanges"] = nativePageRanges
         }
-        
+
         if let headerHTML = headerHTML {
             values["headerHTML"] = headerHTML
         }
-        
+
         if let footerHTML = footerHTML {
             values["footerHTML"] = footerHTML
         }
-        
+
         return values
     }
 }
