@@ -162,7 +162,7 @@ extension GotenbergClient {
         logger.debug("Converting and merging \(urls.count) URLs")
 
         // Convert each URL to PDF
-        let pdfDataArray = try await withThrowingTaskGroup(of: (Int, Data).self) { group -> [Data] in
+        let pdfData = try await withThrowingTaskGroup(of: (String, Data).self) { group -> [String: Data] in
             for (index, url) in urls.enumerated() {
                 group.addTask {
                     let pdfData = try await convertUrl(
@@ -170,29 +170,24 @@ extension GotenbergClient {
                         options: options,
                         waitTimeout: waitTimeout
                     )
-                    return (index, try await toData(pdfData))
+                    let host = url.host ?? "unknown"
+                    let path = url.path.isEmpty ? "page_\(index)" : url.path
+                    let filename = "\(host)\(path)_\(index).pdf".replacingOccurrences(of: "/", with: "_")
+                    return (filename, try await toData(pdfData))
                 }
             }
 
-            // Collect results in original order
-            var results = [Data?](repeating: nil, count: urls.count)
-            while let (index, data) = try await group.next() {
-                results[index] = data
+            var results: [String: Data] = [:]
+            while let (filename, data) = try await group.next() {
+                results[filename] = data
             }
 
-            return results.compactMap { $0 }
-        }
-
-        let filenames = urls.map { url -> String in
-            let host = url.host ?? "unknown"
-            let path = url.path.isEmpty ? "index" : url.path
-            return "\(host)\(path).pdf".replacingOccurrences(of: "/", with: "_")
+            return results
         }
 
         // Now merge the PDFs
         return try await mergeWithPdfEngines(
-            pdfFiles: pdfDataArray,
-            filenames: filenames,
+            documents: pdfData,
             waitTimeout: waitTimeout
         )
     }
