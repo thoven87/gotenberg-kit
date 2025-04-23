@@ -1,12 +1,12 @@
-<h1 style="text-align:center;">GotenbergKit</h1>
+# GotenbergKit
 
 <p align="center">
-<a href="https://swift.org">
-  <img src="https://img.shields.io/badge/swift-6.0-f05138.svg"/>
-</a>
-<a href="https://github.com/thoven87/gotenberg-kit/actions?query=workflow%3ACI">
-  <img src="https://github.com/thoven87/gotenberg-kit/actions/workflows/ci.yml/badge.svg?branch=main"/>
-</a>
+    <a href="https://swift.org">
+        <img src="https://img.shields.io/badge/swift-6.0-f05138.svg"/>
+    </a>
+    <a href="https://github.com/thoven87/gotenberg-kit/actions?query=workflow%3ACI">
+        <img src="https://github.com/thoven87/gotenberg-kit/actions/workflows/ci.yml/badge.svg?branch=main"/>
+    </a>
 </p>
 
 A Swift library that interacts with [Gotenberg](https://gotenberg.dev/)'s different modules to convert a variety of document formats to PDF files.
@@ -14,9 +14,9 @@ A Swift library that interacts with [Gotenberg](https://gotenberg.dev/)'s differ
 ## Snippets
 To incorporate `gotenberg-kit` into your project, follow the snippets below for SPM dependencies.
 
-### SPM 
+### SPM
 ```swift
-.package(url: "https://github.com/thoven87/gotenberg-kit.git", branch: "main")
+.package(url: "https://github.com/thoven87/gotenberg-kit.git", from: "0.1.0")
 
 .target(name: "MyApp", dependencies: [.product(name: "GotenbergKit", package: "gotenberg-kit")]),
 ```
