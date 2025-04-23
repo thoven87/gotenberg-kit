@@ -4,17 +4,10 @@
 //
 //  Created by Stevenson Michel on 4/11/25.
 //
-
+import Foundation
 import Logging
 import Testing
-
 @testable import GotenbergKit
-
-#if canImport(Darwin) || compiler(<6.0)
-import Foundation
-#else
-import FoundationEssentials
-#endif
 
 @Suite("ConvertWithLibreOfficeTests")
 struct ConvertWithLibreOfficeTests {

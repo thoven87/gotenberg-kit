@@ -1,13 +1,9 @@
+
+import Foundation
 import Logging
 import Testing
-
 @testable import GotenbergKit
 
-#if canImport(Darwin) || compiler(<6.0)
-import Foundation
-#else
-import FoundationEssentials
-#endif
 
 @Suite("GotenbergKit")
 struct GokenbergKitTests {
