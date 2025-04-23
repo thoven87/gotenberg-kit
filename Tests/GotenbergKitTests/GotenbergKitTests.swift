@@ -1,3 +1,4 @@
+
 import Foundation
 import Logging
 import Testing
@@ -108,13 +109,15 @@ struct GokenbergKitTests {
             """
 
         // Load image data from a file
-        let logoData = try Data(contentsOf: URL(string: "https://logolab.app/assets/logo.png")!)
+        //let logoData = try Data(contentsOf: URL(string: "https://logolab.app/assets/logo.png")!)
+        let logoURL = URL(string: "https://logolab.app/assets/logo.png")!
+        let logoData = try await URLSession.shared.data(from: logoURL, delegate: nil)
 
         // Prepare assets
         let assets: [String: Data] = [
             "styles.css": cssContent.data(using: .utf8)!,
             "script.js": jsContent.data(using: .utf8)!,
-            "logo.png": logoData,
+            "logo.png": logoData.0,
         ]
 
         let htmlData = htmlWithAssets.data(using: .utf8)!
@@ -144,14 +147,14 @@ struct GokenbergKitTests {
     func urlToPDF() async throws {
 
         let pdfData = try await client.convertUrl(
-            url: URL(string: "https://developer.apple.com/swift/")!,
+            url: URL(string: "https://developer.apple.com/swift")!,
             options: ChromiumOptions(
                 paperWidth: 11.0,
                 paperHeight: 8.5,  // Landscape size
-                marginTop: 0.5,
-                marginBottom: 0.5,
-                marginLeft: 0.5,
-                marginRight: 0.5,
+                marginTop: 0.39,
+                marginBottom: 0.39,
+                marginLeft: 0.39,
+                marginRight: 0.39,
                 printBackground: true,
                 landscape: true,
                 scale: 1.0,
@@ -235,7 +238,8 @@ struct GokenbergKitTests {
                 """
 
             // Load logo image
-            let logoData = try Data(contentsOf: URL(fileURLWithPath: "/path/to/logo.png"))
+            let url = Bundle.module.url(forResource: "test-logo", withExtension: "png", subdirectory: "Resources/images")!
+            let logoData = try Data(contentsOf: url)
 
             // Prepare files
             let markdownFiles = [
