@@ -37,9 +37,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Build
-        run: swift build --build-tests --configuration debug -Xswiftc -enable-testing -Xswiftc -warnings-as-errors -Xcc -Werror --sanitize address
+        run: swift build --build-tests --configuration debug -Xswiftc -enable-testing -Xswiftc -warnings-as-errors -Xcc -Werror --sanitize address --disable-xctest
       - name: Run Tests
         run: |
-          swift test --skip-build --configuration debug
+          swift test --skip-build --configuration debug --disable-xctest
         env:
           GOTENBERG_URL: http://gotenberg:3000
