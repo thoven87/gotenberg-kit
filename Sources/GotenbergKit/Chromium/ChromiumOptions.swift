@@ -6,6 +6,7 @@
 //
 
 import Logging
+import class Foundation.DateFormatter
 
 #if canImport(Darwin) || compiler(<6.0)
 import Foundation
