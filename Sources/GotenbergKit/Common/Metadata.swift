@@ -5,9 +5,9 @@
 //  Created by Stevenson Michel on 4/11/25.
 //
 #if canImport(Darwin) || compiler(<6.0)
-    import Foundation
+import Foundation
 #else
-    import FoundationEssentials
+import FoundationEssentials
 #endif
 
 // MARK: - Document metadata
@@ -26,23 +26,23 @@ public struct Metadata: Codable, Sendable {
     public var title: String?
     /// http://nickhodge.com/blog/archives/2145
     public var trapped: Trapped?
-    
+
     public struct Trapped: Sendable, Codable {
         let rawValue: _Trapped
-        
+
         enum _Trapped: String, Codable {
             case `true` = "True"
             case `false` = "False"
             case unknown = "Unknown"
         }
-        
+
         public static let `true`: Trapped = .init(rawValue: .true)
-        
+
         public static let `false`: Trapped = .init(rawValue: .false)
-        
+
         public static let unknown: Trapped = .init(rawValue: .unknown)
     }
-    
+
     public init(
         author: String,
         copyright: String,
@@ -70,7 +70,7 @@ public struct Metadata: Codable, Sendable {
         self.title = title
         self.trapped = trapped
     }
-    
+
     enum CodingKeys: String, CodingKey {
         case author = "Author"
         case copyright = "Copyright"
@@ -81,7 +81,7 @@ public struct Metadata: Codable, Sendable {
         case modDate = "ModDate"
         case pDFVersion = "PDFVersion"
         case producer = "Producer"
-        case subject =  "Subject"
+        case subject = "Subject"
         case title = "Title"
         case trapped = "Trapped"
     }

@@ -4,9 +4,9 @@
 import PackageDescription
 
 #if canImport(Darwin) || compiler(<6.0)
-    import Foundation
+import Foundation
 #else
-    import FoundationEssentials
+import FoundationEssentials
 #endif
 
 let package = Package(
@@ -18,10 +18,11 @@ let package = Package(
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
             name: "GotenbergKit",
-            targets: ["GotenbergKit"]),
+            targets: ["GotenbergKit"]
+        )
     ],
     dependencies: [
-        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.0.0"),
+        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.0.0")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -29,7 +30,7 @@ let package = Package(
         .target(
             name: "GotenbergKit",
             dependencies: [
-                .product(name: "AsyncHTTPClient", package: "async-http-client"),
+                .product(name: "AsyncHTTPClient", package: "async-http-client")
             ]
         ),
         .testTarget(

@@ -5,12 +5,15 @@
 //  Created by Stevenson Michel on 4/20/25.
 //
 
-#if canImport(Darwin) || compiler(<6.0)
-    import Foundation
-#else
-    import FoundationEssentials
-#endif
 import Logging
+
+import class Foundation.DateFormatter
+
+#if canImport(Darwin) || compiler(<6.0)
+import Foundation
+#else
+import FoundationEssentials
+#endif
 
 /// Examples of paper size (width x height):
 
@@ -70,7 +73,7 @@ public class PageProperties {
     /// Page ranges to print, e.g., '1-5, 8, 11-13' - empty means all pages.
     /// default All pages
     public private(set) var nativePageRanges: String = _PageProperties.nativePagerRanges
-    
+
     /// Specify if images are exported to PDF using
     /// a lossless compression format like PNG or compressed using the JPEG format.
     /// default false
@@ -89,17 +92,17 @@ public class PageProperties {
     public private(set) var maxImageResolution: MaxImageResolution = .normal
     /// Set the password for opening the source file.
     public private(set) var password: String? = nil
-    
+
     public private(set) var nativePdfFormats: Double?
-    
+
     internal let logger: Logger = Logger(label: "com.gotenberg.swift.DocumentOptionsBuilder")
-    
+
     private let MINIUM_PAPER_WIDTH: Double = 1.0
     private let MINIUM_PAPER_HEIGHT: Double = 1.0
     private let MINIUM_MARGIN: Double = 0.0
-    
+
     public init() {}
-    
+
     /// Sets the paper height
     ///
     public func addPaperWidth(_ paperWidth: Double) throws -> PageProperties {
@@ -109,7 +112,7 @@ public class PageProperties {
         self.paperWidth = paperWidth
         return self
     }
-    
+
     public func addPaperHeight(_ paperHeight: Double) throws -> PageProperties {
         guard paperHeight > MINIUM_PAPER_HEIGHT else {
             throw GotenbergError.paperHeightTooSmall
@@ -117,7 +120,7 @@ public class PageProperties {
         self.paperHeight = paperHeight
         return self
     }
-    
+
     public func addMarginTop(_ marginTop: Double) throws -> PageProperties {
         guard marginTop > MINIUM_MARGIN else {
             throw GotenbergError.marginTooSmall
@@ -125,7 +128,7 @@ public class PageProperties {
         self.marginTop = marginTop
         return self
     }
-    
+
     public func addMarginBottom(_ marginBottom: Double) throws -> PageProperties {
         guard marginBottom > MINIUM_MARGIN else {
             throw GotenbergError.marginTooSmall
@@ -133,7 +136,7 @@ public class PageProperties {
         self.marginBottom = marginBottom
         return self
     }
-    
+
     public func addMarginLeft(_ marginLeft: Double) throws -> PageProperties {
         guard marginLeft > MINIUM_MARGIN else {
             throw GotenbergError.marginTooSmall
@@ -141,7 +144,7 @@ public class PageProperties {
         self.marginLeft = marginLeft
         return self
     }
-    
+
     public func addMarginRight(_ marginRight: Double) throws -> PageProperties {
         guard marginRight > MINIUM_MARGIN else {
             throw GotenbergError.marginTooSmall
@@ -149,17 +152,17 @@ public class PageProperties {
         self.marginRight = marginRight
         return self
     }
-    
+
     public func addPreferCSSPageSize(_ preferCSSPageSize: Bool) -> PageProperties {
         self.preferCSSPageSize = preferCSSPageSize
         return self
     }
-    
+
     public func addPrintBackground(_ printBackground: Bool) -> PageProperties {
         self.printBackground = printBackground
         return self
     }
-    
+
     public func addLandscape(_ landscape: Bool) -> PageProperties {
         self.landscape = landscape
         return self
@@ -170,17 +173,17 @@ public class PageProperties {
         self.merge = true
         return self
     }
-    
+
     public func flattenDocuments() -> PageProperties {
         self.flatten = true
         return self
     }
-    
+
     public func addScale(_ scale: Double) -> PageProperties {
         self.scale = scale
         return self
     }
-    
+
     public func addNativePageRanges(start: Int, end: Int) throws -> PageProperties {
         guard start >= 1 && start < end else {
             throw GotenbergError.pageRangeInvalid
@@ -188,17 +191,17 @@ public class PageProperties {
         self.nativePageRanges = "\(start)-\(end)"
         return self
     }
-    
+
     public func addPDFFormat(_ pdfFormat: PDFFormat) -> PageProperties {
         self.pdfFormat = pdfFormat
         return self
     }
-    
+
     public func addPDFUniversalAccess(_ pdfUniversalAccess: Bool) -> PageProperties {
         self.pdfUniversalAccess = pdfUniversalAccess
         return self
     }
-    
+
     public func addLosslessImageCompression(_ losslessCompression: Bool) -> PageProperties {
         self.losslessImageCompression = losslessCompression
         return self
@@ -208,35 +211,34 @@ public class PageProperties {
         self.password = password
         return self
     }
-    
+
     public func addIMagerQuality(_ quality: Int) -> PageProperties {
         self.quality = quality
         return self
     }
-    
+
     public func reduceImageResolution(_ resolution: Bool) -> PageProperties {
         self.reduceImageResolution = resolution
         return self
     }
-    
+
     public func addMetaData(_ metadata: Metadata) -> PageProperties {
         self.metadata = metadata
         return self
     }
-    
+
     public func addMaxImageResolution(_ maxResolution: MaxImageResolution = .normal) -> PageProperties {
         self.maxImageResolution = maxResolution
         return self
     }
-    
+
     public func build() throws -> PageProperties {
-        return self
+        self
     }
-    
-    
+
     internal var formValues: [String: String] {
         var values: [String: String] = [:]
-        
+
         values["paperWidth"] = String(paperWidth)
         values["paperHeight"] = String(paperHeight)
         values["marginTop"] = String(marginTop)
@@ -250,23 +252,23 @@ public class PageProperties {
         values["nativePageRanges"] = nativePageRanges
         values["pdfFormat"] = pdfFormat.rawValue
         values["pdfUniversalAccess"] = String(pdfUniversalAccess)
-        
+
         if let headerHTML = headerHTML {
             values["headerHTML"] = headerHTML
         }
-        
+
         if let footerHTML = footerHTML {
             values["footerHTML"] = footerHTML
         }
-        
+
         if let waitDelay = waitDelay {
             values["waitDelay"] = String(waitDelay)
         }
-        
+
         if let waitForExpression = waitForExpression {
             values["waitForExpression"] = waitForExpression
         }
-        
+
         if let emulatedMediaType = emulatedMediaType {
             values["emulatedMediaType"] = emulatedMediaType.rawValue
         }
@@ -277,35 +279,37 @@ public class PageProperties {
         values["quality"] = String(quality)
         values["reduceImageResolution"] = String(reduceImageResolution)
         values["maxImageResolution"] = maxImageResolution.rawValue.description
-        
+
         if let metadata = metadata {
             do {
                 let encoder = JSONEncoder()
-                
+
                 let formatter = DateFormatter()
-                
+
                 formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss-SS:00"
-                
+
                 formatter.locale = Locale(identifier: "en_US_POSIX")
                 formatter.timeZone = TimeZone(secondsFromGMT: 0)
-                
+
                 encoder.dateEncodingStrategy = .formatted(formatter)
-                
+
                 let data = try encoder.encode(metadata)
                 if let stringValue = String(data: data, encoding: .utf8) {
                     values["metadata"] = stringValue
                 }
             } catch {
-                logger.error("Error serializing metadata", metadata: [
-                    "error": .string(error.localizedDescription)
-                ])
+                logger.error(
+                    "Error serializing metadata",
+                    metadata: [
+                        "error": .string(error.localizedDescription)
+                    ]
+                )
             }
         }
-        
+
         return values
     }
-    
-    
+
     private struct _PageProperties {
         static let paperWidth: Double = 8.5
         static let paperHeight: Double = 11
@@ -321,29 +325,29 @@ public class PageProperties {
         static let pdfFormat: PDFFormat = .A2B
         static let pdfUniversalAccess: Bool = false
     }
-    
+
     public struct MaxImageResolution: Sendable {
         let rawValue: Resolution
-        
+
         public static let lowest: MaxImageResolution = MaxImageResolution(rawValue: .lowest)
-        
+
         public static let lower: MaxImageResolution = MaxImageResolution(rawValue: .lower)
-        
+
         public static let normal: MaxImageResolution = MaxImageResolution(rawValue: .normal)
-        
+
         public static let higher: MaxImageResolution = MaxImageResolution(rawValue: .higher)
-        
+
         public static let highest: MaxImageResolution = MaxImageResolution(rawValue: .highest)
-        
+
         enum Resolution: Int, CustomStringConvertible {
             case lowest = 75
             case lower = 150
             case normal = 300
             case higher = 600
             case highest = 1200
-            
+
             var description: String {
-                return String(self.rawValue)
+                String(self.rawValue)
             }
         }
     }
