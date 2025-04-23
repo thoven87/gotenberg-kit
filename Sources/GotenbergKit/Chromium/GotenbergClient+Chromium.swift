@@ -93,7 +93,7 @@ extension GotenbergClient {
 
     /// Convert Markdown content to PDF
     /// - Parameters:
-    ///   - markdownFiles: Dictionary mapping filenames to markdown content data
+    ///   - files: Dictionary mapping filenames to markdown content data
     ///   - assets: Optional dictionary of assets keyed by filename
     ///   - options: Chromium conversion options
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server

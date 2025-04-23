@@ -113,8 +113,6 @@ extension GotenbergClient {
             pdfFiles[url.lastPathComponent] = try Data(contentsOf: url)
         }
 
-        let filenames = filePaths.map { URL(fileURLWithPath: $0).lastPathComponent }
-
         return try await mergeWithPdfEngines(
             documents: pdfFiles,
             options: options,
