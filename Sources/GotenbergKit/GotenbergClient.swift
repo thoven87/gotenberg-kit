@@ -6,11 +6,12 @@ import Logging
 import NIO
 import NIOFoundationCompat
 
-#if canImport(Darwin) || compiler(<6.0)
-import Foundation
-#else
-import FoundationEssentials
-#endif
+// Dateformater is not currently part of FoundationEssentials
+import class Foundation.DateFormatter
+import struct Foundation.URL
+import struct Foundation.Data
+import struct Foundation.UUID
+import struct Foundation.TimeInterval
 
 /// A comprehensive Swift client for interacting with Gotenberg API
 public struct GotenbergClient: Sendable {
@@ -166,7 +167,7 @@ public struct GotenbergClient: Sendable {
     /// - Parameter filename: The filename to check
     /// - Returns: The appropriate content type string
     internal func contentTypeForFilename(_ filename: String) -> String {
-        let ext = (filename as NSString).pathExtension.lowercased()
+        let ext = URL(fileURLWithPath: filename).pathExtension.lowercased()
 
         switch ext {
         case "html", "htm":
