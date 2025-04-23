@@ -13,6 +13,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-ci
   cancel-in-progress: true
 
+env:
+  LOG_LEVEL: info
+  SWIFT_DETERMINISTIC_HASHING: 1
 jobs:
   linux:
     runs-on: ubuntu-latest
@@ -28,11 +31,13 @@ jobs:
     container:
       image: ${{ matrix.image }}
     services:
-      psql:
-        image: ${{ matrix.postgres-image }}
+      gotenberg:
+        image: ${{ matrix.gotenberg-image }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Test
         run: |
           swift test --sanitize address
+        env:
+          GOTENBERG_URL: http://gotenberg:3000

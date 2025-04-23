@@ -53,8 +53,6 @@ extension GotenbergClient {
 
         let values = options.formValues
 
-        logger.info("LibreOffice conversion options: \(values)")
-
         return try await sendFormRequest(
             route: "/forms/libreoffice/convert",
             files: files,
