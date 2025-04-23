@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "**.swift"
+      - "**.yml"
+  pull_request:
+  workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-ci
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        image:
+          - "swift:5.10"
+          - "swift:6.1"
+        gotenberg-image:
+          - "gotenberg:8"
+        include:
+          - gotenberg-image: gotenberg:8
+    container:
+      image: ${{ matrix.image }}
+    services:
+      psql:
+        image: ${{ matrix.postgres-image }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Test
+        run: |
+          swift test --sanitize address
