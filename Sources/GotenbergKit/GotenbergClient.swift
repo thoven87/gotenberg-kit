@@ -6,12 +6,12 @@ import Logging
 import NIO
 import NIOFoundationCompat
 
+import struct Foundation.Data
 // Dateformater is not currently part of FoundationEssentials
 import class Foundation.DateFormatter
-import struct Foundation.URL
-import struct Foundation.Data
-import struct Foundation.UUID
 import struct Foundation.TimeInterval
+import struct Foundation.URL
+import struct Foundation.UUID
 
 /// A comprehensive Swift client for interacting with Gotenberg API
 public struct GotenbergClient: Sendable {

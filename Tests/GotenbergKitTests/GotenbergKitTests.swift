@@ -1,9 +1,8 @@
-
 import Foundation
 import Logging
 import Testing
-@testable import GotenbergKit
 
+@testable import GotenbergKit
 
 @Suite("GotenbergKit")
 struct GokenbergKitTests {
