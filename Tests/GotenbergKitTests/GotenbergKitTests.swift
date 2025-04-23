@@ -1,9 +1,12 @@
-
 import Foundation
 import Logging
 import Testing
 
 @testable import GotenbergKit
+
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 @Suite("GotenbergKit")
 struct GokenbergKitTests {
