@@ -1,12 +1,9 @@
+import AsyncHTTPClient
 import Foundation
 import Logging
 import Testing
 
 @testable import GotenbergKit
-
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
 
 @Suite("GotenbergKit")
 struct GokenbergKitTests {
@@ -112,15 +109,18 @@ struct GokenbergKitTests {
             """
 
         // Load image data from a file
-        //let logoData = try Data(contentsOf: URL(string: "https://logolab.app/assets/logo.png")!)
-        let logoURL = URL(string: "https://logolab.app/assets/logo.png")!
-        let logoData = try await URLSession.shared.data(from: logoURL, delegate: nil)
+        let logoData = try await HTTPClient.shared.get(url: "https://logolab.app/assets/logo.png").get()
+
+        guard let logoData = logoData.body else {
+            #expect(Bool(false))
+            return
+        }
 
         // Prepare assets
         let assets: [String: Data] = [
             "styles.css": cssContent.data(using: .utf8)!,
             "script.js": jsContent.data(using: .utf8)!,
-            "logo.png": logoData.0,
+            "logo.png": Data(buffer: logoData),
         ]
 
         let htmlData = htmlWithAssets.data(using: .utf8)!
