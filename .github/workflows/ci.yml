@@ -25,9 +25,9 @@ jobs:
         image:
           - "swift:6.1"
         gotenberg-image:
-          - "gotenberg:8"
+          - "gotenberg/gotenberg:8"
         include:
-          - gotenberg-image: gotenberg:8
+          - gotenberg-image: gotenberg/gotenberg:8
     container:
       image: ${{ matrix.image }}
     services:
