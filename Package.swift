@@ -3,10 +3,10 @@
 
 import PackageDescription
 
-#if canImport(Darwin) || compiler(<6.0)
-import Foundation
-#else
+#if canImport(FoundationEssentials)
 import FoundationEssentials
+#else
+import Foundation
 #endif
 
 let package = Package(

@@ -9,10 +9,10 @@ import Logging
 
 import class Foundation.DateFormatter
 
-#if canImport(Darwin) || compiler(<6.0)
-import Foundation
-#else
+#if canImport(FoundationEssentials)
 import FoundationEssentials
+#else
+import Foundation
 #endif
 
 /// ChromiumOptions for HTML and URL conversion to PDF
