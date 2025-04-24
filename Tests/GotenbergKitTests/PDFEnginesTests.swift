@@ -116,7 +116,7 @@ struct PDFEnginesTests {
 
         // Option 1: Using the convenience method
         let startTime = Date()
-        let mergedPDF = try await client.convertWithPDFEngines(
+        let pdfDocument = try await client.convertWithPDFEngines(
             documents: [
                 "page_1.pdf": document1,
                 "page_2.pdf": document2,
@@ -131,13 +131,39 @@ struct PDFEnginesTests {
 
         let duration = Date().timeIntervalSince(startTime)
 
-        let contentLength = mergedPDF.headers.first(name: "Content-Length").flatMap(Int.init) ?? 0
+        let contentLength = pdfDocument.headers.first(name: "Content-Length").flatMap(Int.init) ?? 0
 
         logger.info("Converted PDF size: \(contentLength) bytes, completed in \(String(format: "%.2f", duration)) seconds")
 
         // Save the converted PDF file
-        let outputPath = "\(baseOutputPath)/documents_to_pdfs.pdf"
-        try await client.writeToFile(mergedPDF, at: outputPath)
+        let outputPath = "\(baseOutputPath)/converted_document.pdf"
+        try await client.writeToFile(pdfDocument, at: outputPath)
         logger.info("Saved PDF to \(outputPath)")
+    }
+
+    @Test
+    func splitPDFs() async throws {
+        let document = Bundle.module.url(forResource: "pages_3", withExtension: "pdf", subdirectory: "Resources/documents")!
+
+        logger.info("Starting to split file to mutiple PDFs")
+
+        let startTime = Date()
+        let splitPDFs = try await client.splitPDF(
+            documents: [
+                "page_3.pdf": try Data(contentsOf: document)
+            ],
+            waitTimeout: 10
+        )
+
+        let duration = Date().timeIntervalSince(startTime)
+
+        let contentLength = splitPDFs.headers.first(name: "Content-Length").flatMap(Int.init) ?? 0
+
+        logger.info("Converted PDF size: \(contentLength) bytes, completed in \(String(format: "%.2f", duration)) seconds")
+
+        // Save the converted PDF file
+        let outputPath = "\(baseOutputPath)/split_pdfs.zip"
+        try await client.writeToFile(splitPDFs, at: outputPath)
+        logger.info("Saved Zip file to \(outputPath)")
     }
 }

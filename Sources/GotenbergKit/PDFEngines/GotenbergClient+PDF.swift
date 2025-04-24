@@ -19,6 +19,7 @@ extension GotenbergClient {
     /// Merge multiple PDF files into a single PDF
     /// - Parameters:
     ///   - documents: Dictionary of PDF file data to be merged
+    ///   - options: PDFEngineOptions
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
     /// - Returns: GotenbergResponse containing the merged PDF
     public func mergeWithPDFEngines(
@@ -57,48 +58,10 @@ extension GotenbergClient {
         )
     }
 
-    // MARK: - PDF Operations
-
-    /// Extract specific pages from a PDF
-    /// - Parameters:
-    ///   - pdfData: The PDF data to extract pages from
-    ///   - pages: Array of page numbers to extract (1-based indexing)
-    ///   - filename: Optional filename for the PDF
-    ///   - waitTimeout: Timeout in seconds for the Gotenberg server
-    /// - Returns: GotenbergResponse containing the PDF with only the extracted pages
-    public func extractPages(
-        from pdfData: Data,
-        pages: [Int],
-        filename: String = "document.pdf",
-        options: PDFEngineOptions = PDFEngineOptions(),
-        waitTimeout: TimeInterval = 30
-    ) async throws -> GotenbergResponse {
-        guard !pages.isEmpty else {
-            throw GotenbergError.noPagesSpecified
-        }
-
-        let files = [
-            FormFile(
-                name: "files",
-                filename: filename,
-                contentType: "application/pdf",
-                data: pdfData
-            )
-        ]
-
-        let values = ["pages": pages.map { String($0) }.joined(separator: ",")]
-
-        return try await sendFormRequest(
-            route: "/forms/pdfengines/extract",
-            files: files,
-            values: values,
-            headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
-        )
-    }
-
     /// Merge PDFs from local file paths
     /// - Parameters:
     ///   - filePaths: Array of file paths to PDFs that should be merged
+    ///   - options: PDFEngineOptions
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server to process the request
     /// - Returns: GotenbergResponse containing the merged PDF
     public func mergeWithPDFEngines(
@@ -124,12 +87,12 @@ extension GotenbergClient {
     /// - Parameters:
     ///   - urls: Array of URLs to PDFs that should be merged
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server to process the request
-    /// - Returns: Data containing the merged PDF
+    ///   - options: PDFEngineOptions
+    /// - Returns: GotenbergResponse containing the merged PDF
     public func mergeWithPDFEngines(
         urls: [DownloadFrom],
         waitTimeout: TimeInterval = 30,
-        options: PDFEngineOptions = PDFEngineOptions(),
-        metadata: Metadata? = nil
+        options: PDFEngineOptions = PDFEngineOptions()
     ) async throws -> GotenbergResponse {
         guard !urls.isEmpty else {
             throw GotenbergError.noPDFsProvided
@@ -158,12 +121,12 @@ extension GotenbergClient {
     /// - Parameters:
     ///   - urls: Array of URLs of PDFs that should be converted
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server to process the request
-    /// - Returns: Data containing the merged PDF
+    ///   - options: PDFEngineOptions
+    /// - Returns: GotenbergResponse containing the converted PDF
     public func convertWithPDFEngines(
         urls: [DownloadFrom],
         waitTimeout: TimeInterval = 500,
-        options: PDFEngineOptions = PDFEngineOptions(),
-        metadata: Metadata? = nil
+        options: PDFEngineOptions = PDFEngineOptions()
     ) async throws -> GotenbergResponse {
         guard !urls.isEmpty else {
             throw GotenbergError.noPDFsProvided
@@ -191,8 +154,9 @@ extension GotenbergClient {
     /// Convert into PDF/A & PDF/UA
     /// - Parameters:
     ///   - documents: Dictionary of PDF file data to be converted
+    ///   - options: PDFEngineOptions
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
-    /// - Returns: GotenbergResponse containing the merged PDF
+    /// - Returns: GotenbergResponse containing the converted PDF
     public func convertWithPDFEngines(
         documents: [String: Data],
         options: PDFEngineOptions = PDFEngineOptions(),
@@ -202,7 +166,7 @@ extension GotenbergClient {
             throw GotenbergError.noPDFsProvided
         }
 
-        logger.debug("Converting \(documents.lazy.count) files PDFs from URLs using downloadFrom parameter")
+        logger.debug("Converting \(documents.lazy.count) files PDFs from paths")
 
         // Create request with PDF files
         var files: [FormFile] = []
@@ -222,9 +186,93 @@ extension GotenbergClient {
 
         // Send request to Gotenberg
         return try await sendFormRequest(
-            route: "/forms/pdfengines/merge",
+            route: "/forms/pdfengines/convert",
             files: files,
             values: options.formValues,
+            headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
+        )
+    }
+
+    /// Splits a PDF file into multiple PDF files
+    /// - Parameters:
+    ///   - documents: Dictionary of PDF file data to be split into multiple files
+    ///   - options: SplitPDFOptions with splitSpan defaults to 1 and splitMode to intervals
+    ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    /// - Returns: GotenbergResponse containing a zip file if splitUnify is true or just one PDF if splitUnify is false
+    public func splitPDF(
+        documents: [String: Data],
+        options: SplitPDFOptions = SplitPDFOptions(
+            splitSpan: "1",
+            splitMode: .intervals
+        ),
+        waitTimeout: TimeInterval = 500
+    ) async throws -> GotenbergResponse {
+        guard !documents.isEmpty else {
+            throw GotenbergError.noPDFsProvided
+        }
+
+        logger.debug("Splitting \(documents.lazy.count) files PDFs from paths")
+
+        if options.splitUnify && options.splitMode != .pages {
+            throw GotenbergError.invalidInput(message: "Unify option can only be used with mode: pages")
+        }
+
+        // Create request with PDF files
+        var files: [FormFile] = []
+
+        for (filename, data) in documents {
+            files.append(
+                FormFile(
+                    name: "files",
+                    filename: filename,
+                    contentType: contentTypeForFilename(filename),
+                    data: data
+                )
+            )
+            logger.debug("Splitting file \(filename) using PDF engines route")
+            logger.debug("Document size: \(data.lazy.count) bytes")
+        }
+
+        // Send request to Gotenberg
+        return try await sendFormRequest(
+            route: "/forms/pdfengines/split",
+            files: files,
+            values: options.formValues,
+            headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
+        )
+    }
+
+    /// Splits a PDF file into multiple PDF files
+    /// - Parameters:
+    ///   - documents: Dictionary of PDF file data to be split into multiple files
+    ///   - options: SplitPDFOptions with splitSpan defaults to 1 and splitMode to intervals
+    ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    /// - Returns: GotenbergResponse containing a zip file if splitUnify is true or just one PDF if splitUnify is false
+    public func splitPDF(
+        urls: [DownloadFrom],
+        options: SplitPDFOptions = SplitPDFOptions(
+            splitSpan: "1",
+            splitMode: .intervals
+        ),
+        waitTimeout: TimeInterval = 500
+    ) async throws -> GotenbergResponse {
+        guard !urls.isEmpty else {
+            throw GotenbergError.noURLsProvided
+        }
+
+        logger.debug("Splitting \(urls.count) PDFS with PDF engines route")
+
+        // Convert to JSON
+        let jsonData = try JSONEncoder().encode(urls)
+        let jsonString = String(data: jsonData, encoding: .utf8)!
+
+        var values = options.formValues
+        values["downloadFrom"] = jsonString
+
+        return try await sendFormRequest(
+            route: "/forms/pdfengines/split",
+            files: [],
+            values: values,
             headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
         )
     }

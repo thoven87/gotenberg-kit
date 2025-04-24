@@ -7,8 +7,6 @@ import NIO
 import NIOFoundationCompat
 
 import struct Foundation.Data
-// Dateformater is not currently part of FoundationEssentials
-import class Foundation.DateFormatter
 import struct Foundation.TimeInterval
 import struct Foundation.URL
 import struct Foundation.UUID
