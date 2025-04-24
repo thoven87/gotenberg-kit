@@ -37,12 +37,13 @@ struct ConvertWithLibreOfficeTests {
 
     @Test
     func convertDocumentFromURL() async throws {
-        let url = URL(string: "https://data.ny.gov/api/views/j6d2-s8m2/rows.csv?accessType=DOWNLOAD")!
+        let url = "https://data.ny.gov/api/views/j6d2-s8m2/rows.csv?accessType=DOWNLOAD"
+        let downloadFrom = DownloadFrom(url: url, extraHttpHeaders: nil)
 
         logger.info("Converting CSV to PDF")
 
         let response = try await client.convertWithLibreOffice(
-            urls: [url, url]
+            urls: [downloadFrom, downloadFrom]
         )
 
         #expect(response.status == .ok)
@@ -113,8 +114,6 @@ struct ConvertWithLibreOfficeTests {
         // Save the merged PDF
         let outputPath = "/tmp/merged_documents.pdf"
         try await client.writeToFile(mergedPDF, at: outputPath)
-        //
-        //        logger.info("Successfully converted and merged documents to PDF: \(outputPath)")
     }
 
     /// Example: Convert and merge documents from URLs
@@ -126,7 +125,7 @@ struct ConvertWithLibreOfficeTests {
         let documentURLs = [
             "https://data.ny.gov/api/views/j6d2-s8m2/rows.csv?accessType=DOWNLOAD",
             "https://data.ny.gov/api/views/j6d2-s8m2/rows.csv?accessType=DOWNLOAD",
-        ].map { URL(string: $0)! }
+        ].map { DownloadFrom(url: $0) }
 
         let mergedDocument = try await client.convertWithLibreOffice(
             urls: documentURLs,

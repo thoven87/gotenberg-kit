@@ -126,7 +126,7 @@ extension GotenbergClient {
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server to process the request
     /// - Returns: Data containing the merged PDF
     public func mergeWithPDFEngines(
-        urls: [URL],
+        urls: [DownloadFrom],
         waitTimeout: TimeInterval = 30,
         options: PDFEngineOptions = PDFEngineOptions(),
         metadata: Metadata? = nil
@@ -137,11 +137,8 @@ extension GotenbergClient {
 
         logger.debug("Merging \(urls.count) PDFs from URLs using downloadFrom parameter")
 
-        // Prepare the downloadFrom parameter - array of objects with url property
-        let downloadItems = urls.map { ["url": $0.absoluteString] }
-
         // Convert to JSON
-        let jsonData = try JSONEncoder().encode(downloadItems)
+        let jsonData = try JSONEncoder().encode(urls)
         let jsonString = String(data: jsonData, encoding: .utf8)!
 
         var values = options.formValues

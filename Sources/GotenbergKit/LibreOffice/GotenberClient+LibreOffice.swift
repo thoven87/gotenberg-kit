@@ -69,7 +69,7 @@ extension GotenbergClient {
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
     /// - Returns: Async Sequence  containing the converted PDF
     public func convertWithLibreOffice(
-        urls: [URL],
+        urls: [DownloadFrom],
         options: PageProperties = PageProperties(),
         waitTimeout: TimeInterval = 5
     ) async throws -> GotenbergResponse {
@@ -79,13 +79,8 @@ extension GotenbergClient {
 
         logger.debug("Converting \(urls.count) with LibreOffice route")
 
-        let files: [FormFile] = []
-
-        // Prepare the downloadFrom parameter - array of objects with url property
-        let downloadItems = urls.map { ["url": $0.absoluteString] }
-
         // Convert to JSON
-        let jsonData = try JSONEncoder().encode(downloadItems)
+        let jsonData = try JSONEncoder().encode(urls)
         let jsonString = String(data: jsonData, encoding: .utf8)!
 
         var values = options.formValues
@@ -93,7 +88,7 @@ extension GotenbergClient {
 
         return try await sendFormRequest(
             route: "/forms/libreoffice/convert",
-            files: files,
+            files: [],
             values: values,
             headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
         )
