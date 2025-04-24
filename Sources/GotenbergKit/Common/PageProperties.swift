@@ -65,7 +65,7 @@ public class PageProperties {
     public private(set) var emulatedMediaType: EmulatedMediaType? = nil
     /// Exported document metadata
     public private(set) var metadata: Metadata? = nil
-    /// Should flatten document
+    /// When set to true, flattens the split PDF files, making form fields and annotations uneditable
     public private(set) var flatten: Bool = false
     /// Should merge documents
     /// Setting false will return a zip with all supported files coverted to PDF
