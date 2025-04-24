@@ -458,4 +458,67 @@ extension GotenbergClient {
             headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
         )
     }
+
+    /// Read PDF metadata
+    /// - Parameters:
+    ///   - documents: Dictionary of PDF file data to be split into multiple files
+    ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    /// - Returns: GotenbergResponse containg the response of parse metadata
+    public func readPDFMetadata(
+        urls: [DownloadFrom],
+        waitTimeout: TimeInterval = 500
+    ) async throws -> GotenbergResponse {
+        guard !urls.isEmpty else {
+            throw GotenbergError.noURLsProvided
+        }
+
+        logger.debug("Reading metadata for \(urls.lazy.count) PDFs from paths")
+
+        return try await sendFormRequest(
+            route: "/forms/pdfengines/metadata/read",
+            files: [],
+            values: [:],
+            headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
+        )
+    }
+
+    /// Read PDF metadata
+    /// - Parameters:
+    ///   - documents: Dictionary of PDF file data to be split into multiple files
+    ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    /// - Returns: GotenbergResponse containg the response of parse metadata
+    public func readPDFMetadata(
+        documents: [String: Data],
+        waitTimeout: TimeInterval = 500
+    ) async throws -> GotenbergResponse {
+        guard !documents.isEmpty else {
+            throw GotenbergError.noPDFsProvided
+        }
+
+        logger.debug("Reading metadata for \(documents.lazy.count) PDFs from paths")
+
+        // Create request with PDF files
+        var files: [FormFile] = []
+
+        for (filename, data) in documents {
+            files.append(
+                FormFile(
+                    name: "files",
+                    filename: filename,
+                    contentType: contentTypeForFilename(filename),
+                    data: data
+                )
+            )
+            logger.debug("Reading metadata for file \(filename) using PDF engines route")
+            logger.debug("Document size: \(data.lazy.count) bytes")
+        }
+
+        // Send request to Gotenberg
+        return try await sendFormRequest(
+            route: "/forms/pdfengines/metadata/read",
+            files: files,
+            values: [:],
+            headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
+        )
+    }
 }

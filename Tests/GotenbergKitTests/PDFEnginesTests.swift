@@ -101,6 +101,7 @@ struct PDFEnginesTests {
         let outputPath = "\(baseOutputPath)/merged_pdfs_from_paths.pdf"
         try await client.writeToFile(mergedPDF, at: outputPath)
         logger.info("Saved merged PDF to \(outputPath)")
+        #expect(mergedPDF.status == .ok)
     }
 
     @Test
@@ -139,6 +140,7 @@ struct PDFEnginesTests {
         let outputPath = "\(baseOutputPath)/converted_document.pdf"
         try await client.writeToFile(pdfDocument, at: outputPath)
         logger.info("Saved PDF to \(outputPath)")
+        #expect(pdfDocument.status == .ok)
     }
 
     @Test
@@ -165,20 +167,21 @@ struct PDFEnginesTests {
         let outputPath = "\(baseOutputPath)/split_pdfs.zip"
         try await client.writeToFile(splitPDFs, at: outputPath)
         logger.info("Saved Zip file to \(outputPath)")
+        #expect(splitPDFs.status == .ok)
     }
 
     @Test
     func flattenPDFs() async throws {
         let document = Bundle.module.url(forResource: "pages_3", withExtension: "pdf", subdirectory: "Resources/documents")!
 
-        let documen1 = Bundle.module.url(forResource: "page_1", withExtension: "pdf", subdirectory: "Resources/documents")!
+        let document1 = Bundle.module.url(forResource: "page_1", withExtension: "pdf", subdirectory: "Resources/documents")!
 
         logger.info("Starting to flatten files")
 
         let startTime = Date()
-        let splitPDFs = try await client.flattenPDF(
+        let flattenPDFs = try await client.flattenPDF(
             documents: [
-                "page_1.pdf": try Data(contentsOf: documen1),
+                "page_1.pdf": try Data(contentsOf: document1),
                 "pages_3.pdf": try Data(contentsOf: document),
             ],
             waitTimeout: 10
@@ -186,28 +189,29 @@ struct PDFEnginesTests {
 
         let duration = Date().timeIntervalSince(startTime)
 
-        let contentLength = splitPDFs.headers.first(name: "Content-Length").flatMap(Int.init) ?? 0
+        let contentLength = flattenPDFs.headers.first(name: "Content-Length").flatMap(Int.init) ?? 0
 
         logger.info("Flattened PDF size: \(contentLength) bytes, completed in \(String(format: "%.2f", duration)) seconds")
 
         // Save the converted PDF file
         let outputPath = "\(baseOutputPath)/flattened_pdfs.zip"
-        try await client.writeToFile(splitPDFs, at: outputPath)
+        try await client.writeToFile(flattenPDFs, at: outputPath)
         logger.info("Saved Zip file to \(outputPath)")
+        #expect(flattenPDFs.status == .ok)
     }
 
     @Test
     func writePDFsMetadata() async throws {
         let document = Bundle.module.url(forResource: "pages_3", withExtension: "pdf", subdirectory: "Resources/documents")!
 
-        let documen1 = Bundle.module.url(forResource: "page_1", withExtension: "pdf", subdirectory: "Resources/documents")!
+        let document1 = Bundle.module.url(forResource: "page_1", withExtension: "pdf", subdirectory: "Resources/documents")!
 
         logger.info("Starting to write metadata to files")
 
         let startTime = Date()
-        let splitPDFs = try await client.writePDFMetadata(
+        let pdfsWithMetadata = try await client.writePDFMetadata(
             documents: [
-                "page_1.pdf": try Data(contentsOf: documen1),
+                "page_1.pdf": try Data(contentsOf: document1),
                 "pages_3.pdf": try Data(contentsOf: document),
             ],
             metadata: [
@@ -219,13 +223,38 @@ struct PDFEnginesTests {
 
         let duration = Date().timeIntervalSince(startTime)
 
-        let contentLength = splitPDFs.headers.first(name: "Content-Length").flatMap(Int.init) ?? 0
+        let contentLength = pdfsWithMetadata.headers.first(name: "Content-Length").flatMap(Int.init) ?? 0
 
         logger.info("Wrote metadata to PDF size: \(contentLength) bytes, completed in \(String(format: "%.2f", duration)) seconds")
 
         // Save the converted PDF file
         let outputPath = "\(baseOutputPath)/metadata_pdfs.zip"
-        try await client.writeToFile(splitPDFs, at: outputPath)
+        try await client.writeToFile(pdfsWithMetadata, at: outputPath)
         logger.info("Saved Zip file to \(outputPath)")
+        #expect(pdfsWithMetadata.status == .ok)
+    }
+
+    @Test
+    func readPDFsMetadata() async throws {
+        let document = Bundle.module.url(forResource: "pages_3", withExtension: "pdf", subdirectory: "Resources/documents")!
+
+        let document1 = Bundle.module.url(forResource: "page_1", withExtension: "pdf", subdirectory: "Resources/documents")!
+
+        logger.info("Starting to write metadata to files")
+
+        let startTime = Date()
+        let metadataResponse = try await client.readPDFMetadata(
+            documents: [
+                "page_1.pdf": try Data(contentsOf: document1),
+                "pages_3.pdf": try Data(contentsOf: document),
+            ],
+            waitTimeout: 10
+        )
+
+        let duration = Date().timeIntervalSince(startTime)
+
+        logger.info("Reading metadata completed in \(String(format: "%.2f", duration)) seconds")
+
+        #expect(metadataResponse.status == .ok)
     }
 }
