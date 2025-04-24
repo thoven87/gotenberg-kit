@@ -150,7 +150,7 @@ public struct GotenbergClient: Sendable {
         let timeout = TimeInterval(headers["Gotenberg-Wait-Timeout"] ?? "30") ?? 30
         let response = try await httpClient.execute(
             request,
-            timeout: .seconds(Int64(timeout) + 10)
+            timeout: .seconds(Int64(timeout))
         )
 
         // Validate the response status
