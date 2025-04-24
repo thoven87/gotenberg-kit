@@ -316,7 +316,7 @@ struct GokenbergKitTests {
                         url: url,
                         options: ChromiumOptions(
                             printBackground: true,
-                            waitDelay: 0.5
+                            waitDelay: 1
                         )
                     )
                     return (url, pdfData)
@@ -352,33 +352,33 @@ struct GokenbergKitTests {
         #expect(result.isEmpty == false)
     }
 
-    //    @Test
-    //    func mergePDFsFromURL() async throws {
-    //        let pdfURLs: [URL] = [
-    //            "\(serverURL)/documents/page_1.pdf",
-    //            "\(serverURL)/documents/simple.pdf",
-    //        ].map { URL(string: $0)! }
-    //
-    //        logger.info("Starting to merge \(pdfURLs.count) PDFs")
-    //
-    //        // Option 1: Using the convenience method
-    //        let startTime = Date()
-    //        let mergedPDF = try await client.mergeWithPDFEngines(
-    //            urls: pdfURLs,
-    //            waitTimeout: 10  // Increase timeout for larger PDFs or slower connections
-    //        )
-    //
-    //        let duration = Date().timeIntervalSince(startTime)
-    //
-    //        let contentLength = mergedPDF.headers.first(name: "Content-Length").flatMap(Int.init) ?? 0
-    //
-    //        logger.info("Merged PDF size: \(contentLength) bytes, completed in \(String(format: "%.2f", duration)) seconds")
-    //
-    //        // Save the merged PDF
-    //        let outputPath = "\(baseOutputPath)/merged_pdfs_from_urls.pdf"
-    //        try await client.writeToFile(mergedPDF, at: outputPath)
-    //        logger.info("Saved merged PDF to \(outputPath)")
-    //    }
+//    @Test
+//    func mergePDFsFromURL() async throws {
+//        let pdfURLs: [URL] = [
+//            "\(serverURL)/documents/page_1.pdf",
+//            "\(serverURL)/documents/page_2.pdf",
+//        ].map { URL(string: $0)! }
+//
+//        logger.info("Starting to merge \(pdfURLs.count) PDFs")
+//
+//        // Option 1: Using the convenience method
+//        let startTime = Date()
+//        let mergedPDF = try await client.mergeWithPDFEngines(
+//            urls: pdfURLs,
+//            waitTimeout: 10  // Increase timeout for larger PDFs or slower connections
+//        )
+//
+//        let duration = Date().timeIntervalSince(startTime)
+//
+//        let contentLength = mergedPDF.headers.first(name: "Content-Length").flatMap(Int.init) ?? 0
+//
+//        logger.info("Merged PDF size: \(contentLength) bytes, completed in \(String(format: "%.2f", duration)) seconds")
+//
+//        // Save the merged PDF
+//        let outputPath = "\(baseOutputPath)/merged_pdfs_from_urls.pdf"
+//        try await client.writeToFile(mergedPDF, at: outputPath)
+//        logger.info("Saved merged PDF to \(outputPath)")
+//    }
 
     @Test
     func mergePDFsFromPath() async throws {
