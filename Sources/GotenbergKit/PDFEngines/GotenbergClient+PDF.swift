@@ -193,7 +193,7 @@ extension GotenbergClient {
         )
     }
 
-    /// Splits a PDF file into multiple PDF files
+    /// Splits PDF files into multiple PDF files
     /// - Parameters:
     ///   - documents: Dictionary of PDF file data to be split into multiple files
     ///   - options: SplitPDFOptions with splitSpan defaults to 1 and splitMode to intervals
@@ -242,9 +242,9 @@ extension GotenbergClient {
         )
     }
 
-    /// Splits a PDF file into multiple PDF files
+    /// Splits PDF files into multiple PDF files
     /// - Parameters:
-    ///   - documents: Dictionary of PDF file data to be split into multiple files
+    ///   - urls: Array of DownloadFrom
     ///   - options: SplitPDFOptions with splitSpan defaults to 1 and splitMode to intervals
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
     /// - Returns: GotenbergResponse containing a zip file if splitUnify is true or just one PDF if splitUnify is false
@@ -271,6 +271,77 @@ extension GotenbergClient {
 
         return try await sendFormRequest(
             route: "/forms/pdfengines/split",
+            files: [],
+            values: values,
+            headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
+        )
+    }
+
+    /// Flattens  PDFs files into multiple PDF files
+    /// - Parameters:
+    ///   - documents: Dictionary of PDF file data to be split into multiple files
+    ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    /// - Returns: GotenbergResponse containing a zip file if more than one file was passed as an input
+    public func flattenPDF(
+        documents: [String: Data],
+        waitTimeout: TimeInterval = 500
+    ) async throws -> GotenbergResponse {
+        guard !documents.isEmpty else {
+            throw GotenbergError.noPDFsProvided
+        }
+
+        logger.debug("Flattening \(documents.lazy.count) files PDFs from paths")
+
+        // Create request with PDF files
+        var files: [FormFile] = []
+
+        for (filename, data) in documents {
+            files.append(
+                FormFile(
+                    name: "files",
+                    filename: filename,
+                    contentType: contentTypeForFilename(filename),
+                    data: data
+                )
+            )
+            logger.debug("Flattening file \(filename) using PDF engines route")
+            logger.debug("Document size: \(data.lazy.count) bytes")
+        }
+
+        // Send request to Gotenberg
+        return try await sendFormRequest(
+            route: "/forms/pdfengines/flatten",
+            files: files,
+            values: [:],
+            headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
+        )
+    }
+
+    /// Flattens PDF files into multiple PDF files
+    /// - Parameters:
+    ///   - urls: Array of DownloadFrom
+    ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    /// - Returns: GotenbergResponse containing a zip file if more than one file was passed as an input
+    public func flattenPDF(
+        urls: [DownloadFrom],
+        waitTimeout: TimeInterval = 500
+    ) async throws -> GotenbergResponse {
+        guard !urls.isEmpty else {
+            throw GotenbergError.noURLsProvided
+        }
+
+        logger.debug("Flattening \(urls.count) PDFS with PDF engines route")
+
+        // Convert to JSON
+        let jsonData = try JSONEncoder().encode(urls)
+        let jsonString = String(data: jsonData, encoding: .utf8)!
+
+        let values = [
+            "downloadFrom": jsonString
+        ]
+
+        return try await sendFormRequest(
+            route: "/forms/pdfengines/flatten",
             files: [],
             values: values,
             headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
