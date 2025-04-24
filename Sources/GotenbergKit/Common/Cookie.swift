@@ -5,7 +5,7 @@
 //  Created by Stevenson Michel on 4/11/25.
 //
 
-public struct Cookie: Codable {
+public struct Cookie: Codable, Sendable {
     /// Cookie name
     public var name: String
     /// Cookie value
@@ -21,7 +21,7 @@ public struct Cookie: Codable {
     /// Accepted values are "Strict", "Lax" or "None".
     public var sameSite: SameSite = .none
 
-    public enum SameSite: String, Codable {
+    public enum SameSite: String, Codable, Sendable {
         case none = "None"
         case strict = "Strict"
         case lax = "Lax"

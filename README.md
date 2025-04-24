@@ -132,6 +132,10 @@ Gotenberg's [routes](https://gotenberg.dev/docs/routes)
 let response = try await client.convertUrl("https://gotenberg.dev/")
 ```
 
+```swift
+let response = try await client.capture(url: URL(string: "https://gotenberg.dev/")!)
+```
+
 #### HTML
 
 The only requirement is that one of the files name should be `index.html`.
@@ -147,13 +151,80 @@ let response = try await client.convertHtml(
 )
 ```
 
+```swift
+let response = try await client.capture(
+    htmlString: "<html>CONTENT</html>"
+)
+```
+
 #### Markdown
 
-This route accepts an `index.html` file plus markdown files. Check [Gotenberg docs](https://gotenberg.dev/docs/routes#markdown-files-into-pdf-route) for details.
+This route accepts an `index.html` file plus a markdown file.
+
+```swift
+let html = """
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>My PDF</title>
+</head>
+<body>
+    {{ toHTML "file.md" }}
+</body>
+"""
+let response = try await client.convertMarkdown(
+    files: [
+        "index.html": html.data(using: .utf8)!,
+        "file.md": "Markdown Content".data(using: .utf8)!
+    ]
+)
+
+let response = try await client.capture(
+    html: html.data(using: .utf8)!,
+    markdown: "Markdown Content".data(using: .utf8)!
+)
+```
+
+Each `convert()` method takes an optional `properties` parameter of the following type which dictates how the PDF generated
+file will look like.
+
+```swift
+PageProperties
+```
+
+In addition to the `PageProperties` customization options, the `convert()` method also accepts a set of parameters to further enhance the versatility of the conversion process.
 
 #### Screenshot
+Similarly, the `capture()` function takes an optional `properties` parameter of the specified type, influencing the appearance of the captured screenshot file.
+
+```swift
+ScreenshotOptions
+```
 
 ### LibreOffice
+
+The `LibreOffice` utility comes with a function called `convertWithLibreOffice`. This function interacts with [LibreOffice](https://gotenberg.dev/docs/routes#convert-with-libreoffice) route to convert different documents to PDF files. You can find the file extensions
+accepted [here](https://gotenberg.dev/docs/routes#convert-with-libreoffice).
+
+```swift
+let response = try await client.convertWithLibreOffice(
+    urls: [
+        .init(url: "https://someurl.com/myfile.csv"),
+        .init(url: "https://someurl.com/myfile.odt"),
+        .init(url: "https://someurl.com/myfile.doc"),
+        .init(url: "https://someurl.com/myfile.pdf")
+    ],
+)
+```
+
+Similarly to Chromium's route `convert` function, this function takes the following optional parameters :
+
+```swift
+LibreOfficeConversionOptions
+```
+
+Note: not setting merge to true will return a zip file containing all PDF files
 
 ### PDF Engines
 

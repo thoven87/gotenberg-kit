@@ -339,14 +339,12 @@ struct GokenbergKitTests {
             "https://swift.org",
         ].map { URL(string: $0)! }
 
-        let result = try await client.captureMultipleURLScreenshots(
+        let result = try await client.capture(
             urls: urls,
             options: ScreenshotOptions(
                 format: .jpeg,
-                fullPage: true,
                 width: 1920,
-                height: 1080,
-                //clip: true
+                height: 1080
             )
         )
         #expect(result.isEmpty == false)
