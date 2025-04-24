@@ -33,6 +33,10 @@ jobs:
     services:
       gotenberg:
         image: ${{ matrix.gotenberg-image }}
+        env:
+          GOTENBERG_API_BASIC_AUTH_USERNAME: "gotenberg"
+          GOTENBERG_API_BASIC_AUTH_PASSWORD: "password"
+          API_ENABLE_BASIC_AUTH: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4

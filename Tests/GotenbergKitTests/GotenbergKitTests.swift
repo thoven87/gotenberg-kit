@@ -8,10 +8,12 @@ import Testing
 @Suite("GotenbergKit")
 struct GokenbergKitTests {
 
-    let serverURL = ProcessInfo.processInfo.environment["GOTENBERG_URL"] ?? "http://localhost:7100"
+    let serverURL = ProcessInfo.processInfo.environment["FILE_SERVER_URL"] ?? "http://host.docker.internal:8081"
 
     let client = GotenbergClient(
-        baseURL: URL(string: ProcessInfo.processInfo.environment["GOTENBERG_URL"] ?? "http://localhost:7100")!
+        baseURL: URL(string: ProcessInfo.processInfo.environment["GOTENBERG_URL"] ?? "http://localhost:7100")!,
+        username: "gotenberg",
+        password: "password"
     )
 
     let logger = Logger(label: "GotenbergKitTests")
@@ -314,7 +316,7 @@ struct GokenbergKitTests {
                         url: url,
                         options: ChromiumOptions(
                             printBackground: true,
-                            waitDelay: 2.0
+                            waitDelay: 1
                         )
                     )
                     return (url, pdfData)
@@ -353,17 +355,17 @@ struct GokenbergKitTests {
     //    @Test
     //    func mergePDFsFromURL() async throws {
     //        let pdfURLs: [URL] = [
-    //            "\(serverURL)/static/testdata/page_1.pdf",
-    //            "\(serverURL)/static/testdata/page_2.pdf",
+    //            "\(serverURL)/documents/page_1.pdf",
+    //            "\(serverURL)/documents/page_2.pdf",
     //        ].map { URL(string: $0)! }
     //
     //        logger.info("Starting to merge \(pdfURLs.count) PDFs")
     //
     //        // Option 1: Using the convenience method
     //        let startTime = Date()
-    //        let mergedPDF = try await client.mergeWithPdfEngines(
+    //        let mergedPDF = try await client.mergeWithPDFEngines(
     //            urls: pdfURLs,
-    //            waitTimeout: 6  // Increase timeout for larger PDFs or slower connections
+    //            waitTimeout: 10  // Increase timeout for larger PDFs or slower connections
     //        )
     //
     //        let duration = Date().timeIntervalSince(startTime)
@@ -377,4 +379,37 @@ struct GokenbergKitTests {
     //        try await client.writeToFile(mergedPDF, at: outputPath)
     //        logger.info("Saved merged PDF to \(outputPath)")
     //    }
+
+    @Test
+    func mergePDFsFromPath() async throws {
+        let pdf1 = Bundle.module.url(forResource: "page_1", withExtension: "pdf", subdirectory: "Resources/documents")!
+
+        let pdf2 = Bundle.module.url(forResource: "page_2", withExtension: "pdf", subdirectory: "Resources/documents")!
+
+        let document1 = try Data(contentsOf: pdf1)
+        let document2 = try Data(contentsOf: pdf2)
+
+        logger.info("Starting to merge PDFs")
+
+        // Option 1: Using the convenience method
+        let startTime = Date()
+        let mergedPDF = try await client.mergeWithPDFEngines(
+            documents: [
+                "page_1.pdf": document1,
+                "page_2.pdf": document2,
+            ],
+            waitTimeout: 10  // Increase timeout for larger PDFs or slower connections
+        )
+
+        let duration = Date().timeIntervalSince(startTime)
+
+        let contentLength = mergedPDF.headers.first(name: "Content-Length").flatMap(Int.init) ?? 0
+
+        logger.info("Merged PDF size: \(contentLength) bytes, completed in \(String(format: "%.2f", duration)) seconds")
+
+        // Save the merged PDF
+        let outputPath = "\(baseOutputPath)/merged_pdfs_from_urls.pdf"
+        try await client.writeToFile(mergedPDF, at: outputPath)
+        logger.info("Saved merged PDF to \(outputPath)")
+    }
 }

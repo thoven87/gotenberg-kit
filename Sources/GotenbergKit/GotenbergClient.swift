@@ -126,10 +126,22 @@ public struct GotenbergClient: Sendable {
             }
 
             if let errorMessage = String(data: errorData, encoding: .utf8) {
-                logger.error("Gotenberg API error: \(errorMessage)")
+                logger.error(
+                    "Gotenberg API error with status",
+                    metadata: [
+                        "statusCode": "\(response.status.code)",
+                        "message": .string(errorMessage),
+                    ]
+                )
                 throw GotenbergError.apiError(statusCode: response.status.code, message: errorMessage)
             } else {
-                logger.error("Gotenberg API error with status: \(response.status.code)")
+                logger.error(
+                    "Gotenberg API error",
+                    metadata: [
+                        "statusCode": "\(response.status.code)",
+                        "message": "Unknown error",
+                    ]
+                )
                 throw GotenbergError.apiError(statusCode: response.status.code, message: "Unknown error")
             }
         }

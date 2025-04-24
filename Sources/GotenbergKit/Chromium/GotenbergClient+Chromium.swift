@@ -186,7 +186,7 @@ extension GotenbergClient {
         }
 
         // Now merge the PDFs
-        return try await mergeWithPdfEngines(
+        return try await mergeWithPDFEngines(
             documents: pdfData,
             waitTimeout: waitTimeout
         )

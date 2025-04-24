@@ -18,7 +18,9 @@ struct ConvertWithLibreOfficeTests {
     let client = GotenbergClient(
         baseURL: URL(
             string: ProcessInfo.processInfo.environment["GOTENBERG_URL"] ?? "http://localhost:7100"
-        )!
+        )!,
+        username: "gotenberg",
+        password: "password"
     )
 
     let metadata: Metadata = Metadata(
@@ -40,7 +42,7 @@ struct ConvertWithLibreOfficeTests {
         logger.info("Converting CSV to PDF")
 
         let response = try await client.convertWithLibreOffice(
-            urls: [url]
+            urls: [url, url]
         )
 
         #expect(response.status == .ok)
@@ -94,7 +96,7 @@ struct ConvertWithLibreOfficeTests {
 
         let options = try PageProperties()
             .mergeFiles()
-            //.addMetaData(metadata)
+            .addMetaData(metadata)
             .flattenDocuments()
             .addPDFFormat(.A1B)
             .build()

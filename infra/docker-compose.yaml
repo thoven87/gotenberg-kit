@@ -1,0 +1,24 @@
+services:
+    gotenberg:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        ports:
+            - "7100:3000"
+        environment:
+            - LC_ALL=en_US.UTF-8
+            - LANG=en_US.UTF-8
+            - LANGUAGE=en_US.UTF-8
+            - LOG_LEVEL=debug
+            - GOTENBERG_API_BASIC_AUTH_USERNAME=gotenberg
+            - GOTENBERG_API_BASIC_AUTH_PASSWORD=password
+            - API_ENABLE_BASIC_AUTH=true
+            - API_ENABLE_DEBUG_ROUTE=true
+    file:
+        build:
+            context: .
+            dockerfile: file.Dockerfile
+        ports:
+            - "8081:80"
+        volumes:
+            - ../Tests/GotenbergKitTests/Resources:/usr/share/nginx/html:ro
