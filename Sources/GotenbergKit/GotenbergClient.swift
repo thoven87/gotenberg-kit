@@ -21,6 +21,7 @@ public struct GotenbergClient: Sendable {
     internal let username: String?
     internal let password: String?
     internal let userAgent: String
+    internal let customHttpHeaders: [String: String]
 
     public typealias GotenbergResponse = HTTPClientResponse
 
@@ -30,13 +31,14 @@ public struct GotenbergClient: Sendable {
     ///   - logger: Optional logger
     ///   - username: Optional username for the Gotenberg server
     ///   - password: Optional password for the Gotenberg server
+    ///   - userAgent: Optional userAgent for all HTTP calls to the Gotenberg server
     ///   - httpClient: HTTClient
     public init(
         baseURL: URL,
         logger: Logger = Logger(label: "com.gotenberg.swift"),
         username: String? = nil,
         password: String? = nil,
-        userAgent: String = "Gotenberg Swift SDK/0.1",
+        userAgent: String = "Gotenberg Swift SDK/1.0",
         httpClient: HTTPClient = HTTPClient.shared
     ) {
         self.baseURL = baseURL
@@ -44,6 +46,34 @@ public struct GotenbergClient: Sendable {
         self.username = username
         self.password = password
         self.userAgent = userAgent
+        self.httpClient = httpClient
+        self.customHttpHeaders = [:]
+    }
+
+    /// Initialize the Gotenberg client
+    /// - Parameters:
+    ///   - baseURL: Base URL of the Gotenberg service (e.g., "http://localhost:3000")
+    ///   - logger: Optional logger
+    ///   - username: Optional username for the Gotenberg server
+    ///   - password: Optional password for the Gotenberg server
+    ///   - userAgent: Optional userAgent for all HTTP calls to the Gotenberg server
+    ///   - customHttpHeaders: For advanced authentication or add custom HTTP headers to requests to the Gotenberg server
+    ///   - httpClient: HTTClient
+    public init(
+        baseURL: URL,
+        logger: Logger = Logger(label: "com.gotenberg.swift"),
+        username: String? = nil,
+        password: String? = nil,
+        userAgent: String = "Gotenberg Swift SDK/1.0",
+        customHttpHeaders: [String: String],
+        httpClient: HTTPClient = HTTPClient.shared
+    ) {
+        self.baseURL = baseURL
+        self.logger = logger
+        self.username = username
+        self.password = password
+        self.userAgent = userAgent
+        self.customHttpHeaders = customHttpHeaders
         self.httpClient = httpClient
     }
 
@@ -104,6 +134,11 @@ public struct GotenbergClient: Sendable {
         // Add additional headers
         for (name, value) in headers {
             request.headers.add(name: name, value: value)
+        }
+
+        // custom http headers
+        for (key, value) in customHttpHeaders {
+            request.headers.add(name: key, value: value)
         }
 
         // Set the request body
