@@ -7,8 +7,6 @@
 
 import Logging
 
-import class Foundation.DateFormatter
-
 #if canImport(Darwin) || compiler(<6.0)
 import Foundation
 #else
@@ -284,14 +282,7 @@ public class PageProperties {
             do {
                 let encoder = JSONEncoder()
 
-                let formatter = DateFormatter()
-
-                formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss-SS:00"
-
-                formatter.locale = Locale(identifier: "en_US_POSIX")
-                formatter.timeZone = TimeZone(secondsFromGMT: 0)
-
-                encoder.dateEncodingStrategy = .formatted(formatter)
+                encoder.dateEncodingStrategy = .formatted(Metadata.dateFormatter())
 
                 let data = try encoder.encode(metadata)
                 if let stringValue = String(data: data, encoding: .utf8) {
