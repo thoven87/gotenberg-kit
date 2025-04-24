@@ -7,10 +7,10 @@
 
 import Logging
 
-#if canImport(Darwin) || compiler(<6.0)
-import Foundation
-#else
+#if canImport(FoundationEssentials)
 import FoundationEssentials
+#else
+import Foundation
 #endif
 
 public struct PDFEngineOptions: Sendable {
