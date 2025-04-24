@@ -5,11 +5,7 @@
 //  Created by Stevenson Michel on 4/12/25.
 //
 
-#if canImport(Darwin) || compiler(<6.0)
-import Foundation
-#else
-import FoundationEssentials
-#endif
+import struct Foundation.Data
 
 // MARK: - Helpers FormFile
 

@@ -3,12 +3,6 @@
 
 import PackageDescription
 
-#if canImport(FoundationEssentials)
-import FoundationEssentials
-#else
-import Foundation
-#endif
-
 let package = Package(
     name: "gotenberg-kit",
     platforms: [

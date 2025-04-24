@@ -1,16 +1,13 @@
-import class Foundation.DateFormatter
-
 //
 //  Metadata.swift
 //  gotenberg-kit
 //
 //  Created by Stevenson Michel on 4/11/25.
 //
-#if canImport(Darwin) || compiler(<6.0)
-import Foundation
-#else
-import FoundationEssentials
-#endif
+import struct Foundation.Date
+import class Foundation.DateFormatter
+import struct Foundation.Locale
+import struct Foundation.TimeZone
 
 // MARK: - Document metadata
 /// Writing metadata may compromise PDF/A compliance.

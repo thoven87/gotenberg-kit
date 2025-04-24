@@ -5,16 +5,9 @@
 //  Created by Stevenson Michel on 4/12/25.
 //
 
-import AsyncHTTPClient
-import Logging
-import NIO
-import NIOFoundationCompat
-
-#if canImport(FoundationEssentials)
-import FoundationEssentials
-#else
-import Foundation
-#endif
+import struct Foundation.Data
+import struct Foundation.TimeInterval
+import struct Foundation.URL
 
 // MARK: - HTML Screenshot Methods
 extension GotenbergClient {

@@ -7,14 +7,9 @@
 
 import Logging
 
-#if canImport(Darwin) || compiler(<6.0)
-import Foundation
-#else
-import FoundationEssentials
-#endif
+import class Foundation.JSONEncoder
 
 /// Examples of paper size (width x height):
-
 /// Letter - 8.5 x 11 (default)
 /// Legal - 8.5 x 14
 /// Tabloid - 11 x 17
