@@ -111,7 +111,7 @@ extension GotenbergClient {
                 FormFile(
                     name: "files",
                     filename: filename,
-                    contentType: "text/markdown",
+                    contentType: contentTypeForFilename(filename),
                     data: data
                 )
             )

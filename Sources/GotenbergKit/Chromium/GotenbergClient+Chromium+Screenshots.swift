@@ -19,7 +19,7 @@ extension GotenbergClient {
     ///   - options: Screenshot options
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
     /// - Returns: GotenbergResponse containing the screenshot image
-    public func captureHTMLScreenshot(
+    public func capture(
         htmlContent: Data,
         assets: [String: Data] = [:],
         options: ScreenshotOptions = ScreenshotOptions(),
@@ -57,40 +57,37 @@ extension GotenbergClient {
     }
 
     /// Capture a screenshot of MarkDown content
+    ///  the html content should have the following {{ toHTML "index.md" }}
+    ///  to render the markdown content
     /// - Parameters:
-    ///   - htmlContent: The HTML content as Data
+    ///   - html: The HTML content as Data
+    ///   - markdown: The markdown content
     ///   - assets: Optional dictionary of assets keyed by filename
     ///   - options: Screenshot options
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
     /// - Returns: GotenbergResponse containing the screenshot image
-    public func captureMarkDownScreenshot(
-        htmlContent: Data,
-        assets: [String: Data] = [:],
+    public func capture(
+        html: Data,
+        markdown: Data,
         options: ScreenshotOptions = ScreenshotOptions(),
         waitTimeout: TimeInterval = 30
     ) async throws -> GotenbergResponse {
         logger.debug("Capturing screenshot of Markdown")
 
-        var files: [FormFile] = [
+        let files: [FormFile] = [
+            FormFile(
+                name: "files",
+                filename: "index.html",
+                contentType: "text/html",
+                data: html
+            ),
             FormFile(
                 name: "files",
                 filename: "index.md",
                 contentType: "text/markdown",
-                data: htmlContent
-            )
+                data: markdown
+            ),
         ]
-
-        // Add assets
-        for (filename, data) in assets {
-            files.append(
-                FormFile(
-                    name: "files",
-                    filename: filename,
-                    contentType: contentTypeForFilename(filename),
-                    data: data
-                )
-            )
-        }
 
         return try await sendFormRequest(
             route: "/forms/chromium/screenshot/markdown",
@@ -107,7 +104,7 @@ extension GotenbergClient {
     ///   - options: Screenshot options
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
     /// - Returns: GotenbergResponse containing the screenshot image
-    public func captureHTMLStringScreenshot(
+    public func capture(
         htmlString: String,
         assets: [String: Data] = [:],
         options: ScreenshotOptions = ScreenshotOptions(),
@@ -117,7 +114,7 @@ extension GotenbergClient {
             throw GotenbergError.invalidInput(message: "Failed to encode HTML string as UTF-8")
         }
 
-        return try await captureHTMLScreenshot(
+        return try await capture(
             htmlContent: htmlData,
             assets: assets,
             options: options,
@@ -133,7 +130,7 @@ extension GotenbergClient {
     ///   - options: Screenshot options
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
     /// - Returns: Data containing the screenshot image
-    public func captureURLScreenshot(
+    public func capture(
         url: URL,
         options: ScreenshotOptions = ScreenshotOptions(),
         waitTimeout: TimeInterval = 30
@@ -159,7 +156,7 @@ extension GotenbergClient {
     ///   - options: Screenshot options
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
     /// - Returns: Dictionary mapping URLs to their screenshot data
-    public func captureMultipleURLScreenshots(
+    public func capture(
         urls: [URL],
         options: ScreenshotOptions = ScreenshotOptions(),
         waitTimeout: TimeInterval = 60
@@ -175,7 +172,7 @@ extension GotenbergClient {
             for url in urls {
                 let options = options
                 group.addTask {
-                    let screenshotData = try await captureURLScreenshot(
+                    let screenshotData = try await capture(
                         url: url,
                         options: options,
                         waitTimeout: waitTimeout
