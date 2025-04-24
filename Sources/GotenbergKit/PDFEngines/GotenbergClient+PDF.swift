@@ -259,7 +259,7 @@ extension GotenbergClient {
         guard !urls.isEmpty else {
             throw GotenbergError.noURLsProvided
         }
-        
+
         logger.debug("Splitting \(urls.count) PDFS with PDF engines route")
 
         // Convert to JSON
