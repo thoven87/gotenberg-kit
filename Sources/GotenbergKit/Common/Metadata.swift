@@ -1,3 +1,5 @@
+import class Foundation.DateFormatter
+
 //
 //  Metadata.swift
 //  gotenberg-kit
@@ -84,5 +86,15 @@ public struct Metadata: Codable, Sendable {
         case subject = "Subject"
         case title = "Title"
         case trapped = "Trapped"
+    }
+
+    package static func dateFormatter() -> DateFormatter {
+        let formatter = DateFormatter()
+
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss-SS:00"
+
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        return formatter
     }
 }
