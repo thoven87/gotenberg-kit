@@ -4,12 +4,7 @@
 //
 //  Created by Stevenson Michel on 4/12/25.
 //
-
-#if canImport(FoundationEssentials)
-import FoundationEssentials
-#else
-import Foundation
-#endif
+import class Foundation.JSONEncoder
 
 // MARK: - Screenshot Options
 

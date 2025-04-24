@@ -195,4 +195,37 @@ struct PDFEnginesTests {
         try await client.writeToFile(splitPDFs, at: outputPath)
         logger.info("Saved Zip file to \(outputPath)")
     }
+
+    @Test
+    func writePDFsMetadata() async throws {
+        let document = Bundle.module.url(forResource: "pages_3", withExtension: "pdf", subdirectory: "Resources/documents")!
+
+        let documen1 = Bundle.module.url(forResource: "page_1", withExtension: "pdf", subdirectory: "Resources/documents")!
+
+        logger.info("Starting to write metadata to files")
+
+        let startTime = Date()
+        let splitPDFs = try await client.writePDFMetadata(
+            documents: [
+                "page_1.pdf": try Data(contentsOf: documen1),
+                "pages_3.pdf": try Data(contentsOf: document),
+            ],
+            metadata: [
+                "Author": "Swift",
+                "Copyright": "Swift Gotenber SDK",
+            ],
+            waitTimeout: 10
+        )
+
+        let duration = Date().timeIntervalSince(startTime)
+
+        let contentLength = splitPDFs.headers.first(name: "Content-Length").flatMap(Int.init) ?? 0
+
+        logger.info("Wrote metadata to PDF size: \(contentLength) bytes, completed in \(String(format: "%.2f", duration)) seconds")
+
+        // Save the converted PDF file
+        let outputPath = "\(baseOutputPath)/metadata_pdfs.zip"
+        try await client.writeToFile(splitPDFs, at: outputPath)
+        logger.info("Saved Zip file to \(outputPath)")
+    }
 }

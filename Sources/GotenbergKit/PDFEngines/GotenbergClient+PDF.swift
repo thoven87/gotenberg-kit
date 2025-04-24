@@ -5,14 +5,10 @@
 //  Created by Stevenson Michel on 4/11/25.
 //
 
-import AsyncHTTPClient
-import NIO
-
-#if canImport(FoundationEssentials)
-import FoundationEssentials
-#else
-import Foundation
-#endif
+import struct Foundation.Data
+import class Foundation.JSONEncoder
+import struct Foundation.TimeInterval
+import struct Foundation.URL
 
 // MARK: - PDF Engines
 extension GotenbergClient {
@@ -342,6 +338,121 @@ extension GotenbergClient {
 
         return try await sendFormRequest(
             route: "/forms/pdfengines/flatten",
+            files: [],
+            values: values,
+            headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
+        )
+    }
+
+    /// Write PDF metadata
+    /// - Parameters:
+    ///   - documents: Dictionary of PDF file data to be split into multiple files
+    ///   - metadata: See https://exiftool.org/TagNames/XMP.html#pdf for an (exhaustive?) list of available metadata.
+    ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    /// - Returns: GotenbergResponse containing a zip file if more than one file was passed as an input
+    public func writePDFMetadata(
+        documents: [String: Data],
+        metadata: [String: String],
+        waitTimeout: TimeInterval = 500
+    ) async throws -> GotenbergResponse {
+        guard !documents.isEmpty else {
+            throw GotenbergError.noPDFsProvided
+        }
+
+        logger.debug("Writting metadata for \(documents.lazy.count) PDFs from paths")
+
+        // Create request with PDF files
+        var files: [FormFile] = []
+
+        for (filename, data) in documents {
+            files.append(
+                FormFile(
+                    name: "files",
+                    filename: filename,
+                    contentType: contentTypeForFilename(filename),
+                    data: data
+                )
+            )
+            logger.debug("Writting metadata for file \(filename) using PDF engines route")
+            logger.debug("Document size: \(data.lazy.count) bytes")
+        }
+
+        var values: [String: String] = [:]
+
+        do {
+            let encoder = JSONEncoder()
+
+            encoder.dateEncodingStrategy = .formatted(Metadata.dateFormatter())
+
+            let data = try encoder.encode(metadata)
+            if let stringValue = String(data: data, encoding: .utf8) {
+                values["metadata"] = stringValue
+            }
+        } catch {
+            logger.error(
+                "Error serializing metadata",
+                metadata: [
+                    "error": .string(error.localizedDescription)
+                ]
+            )
+            throw GotenbergError.invalidInput(message: "Error serializing metadata")
+        }
+
+        // Send request to Gotenberg
+        return try await sendFormRequest(
+            route: "/forms/pdfengines/metadata/write",
+            files: files,
+            values: values,
+            headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
+        )
+    }
+
+    /// Write PDF metadata
+    /// - Parameters:
+    ///   - documents: Dictionary of PDF file data to be split into multiple files
+    ///   - metadata: See https://exiftool.org/TagNames/XMP.html#pdf for an (exhaustive?) list of available metadata.
+    ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    /// - Returns: GotenbergResponse containing a zip file if more than one file was passed as an input
+    public func writePDFMetadata(
+        urls: [DownloadFrom],
+        metadata: [String: String],
+        waitTimeout: TimeInterval = 500
+    ) async throws -> GotenbergResponse {
+        guard !urls.isEmpty else {
+            throw GotenbergError.noURLsProvided
+        }
+
+        logger.debug("Writting metadata for \(urls.lazy.count) PDFs from paths")
+
+        // Convert to JSON
+        let jsonData = try JSONEncoder().encode(urls)
+        let jsonString = String(data: jsonData, encoding: .utf8)!
+
+        var values = [
+            "downloadFrom": jsonString
+        ]
+
+        do {
+            let encoder = JSONEncoder()
+
+            encoder.dateEncodingStrategy = .formatted(Metadata.dateFormatter())
+
+            let data = try encoder.encode(metadata)
+            if let stringValue = String(data: data, encoding: .utf8) {
+                values["metadata"] = stringValue
+            }
+        } catch {
+            logger.error(
+                "Error serializing metadata",
+                metadata: [
+                    "error": .string(error.localizedDescription)
+                ]
+            )
+            throw GotenbergError.invalidInput(message: "Error serializing metadata")
+        }
+
+        return try await sendFormRequest(
+            route: "/forms/pdfengines/metadata/write",
             files: [],
             values: values,
             headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]

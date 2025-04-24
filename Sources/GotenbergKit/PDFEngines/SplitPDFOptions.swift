@@ -7,11 +7,7 @@
 
 import Logging
 
-#if canImport(FoundationEssentials)
-import FoundationEssentials
-#else
-import Foundation
-#endif
+import class Foundation.JSONEncoder
 
 /// Split PDF options
 public struct SplitPDFOptions: Sendable {

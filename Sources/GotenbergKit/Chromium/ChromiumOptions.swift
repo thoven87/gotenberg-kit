@@ -7,11 +7,7 @@
 
 import Logging
 
-#if canImport(FoundationEssentials)
-import FoundationEssentials
-#else
-import Foundation
-#endif
+import class Foundation.JSONEncoder
 
 /// ChromiumOptions for HTML and URL conversion to PDF
 public struct ChromiumOptions: Sendable {

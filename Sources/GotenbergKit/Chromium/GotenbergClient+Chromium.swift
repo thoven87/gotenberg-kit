@@ -5,16 +5,9 @@
 //  Created by Stevenson Michel on 4/11/25.
 //
 
-import AsyncHTTPClient
-import Logging
-import NIO
-import NIOFoundationCompat
-
-#if canImport(FoundationEssentials)
-import FoundationEssentials
-#else
-import Foundation
-#endif
+import struct Foundation.Data
+import struct Foundation.TimeInterval
+import struct Foundation.URL
 
 // MARK: - HTML to PDF Conversion
 extension GotenbergClient {
