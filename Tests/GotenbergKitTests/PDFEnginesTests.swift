@@ -159,10 +159,39 @@ struct PDFEnginesTests {
 
         let contentLength = splitPDFs.headers.first(name: "Content-Length").flatMap(Int.init) ?? 0
 
-        logger.info("Converted PDF size: \(contentLength) bytes, completed in \(String(format: "%.2f", duration)) seconds")
+        logger.info("Split PDF size: \(contentLength) bytes, completed in \(String(format: "%.2f", duration)) seconds")
 
         // Save the converted PDF file
         let outputPath = "\(baseOutputPath)/split_pdfs.zip"
+        try await client.writeToFile(splitPDFs, at: outputPath)
+        logger.info("Saved Zip file to \(outputPath)")
+    }
+
+    @Test
+    func flattenPDFs() async throws {
+        let document = Bundle.module.url(forResource: "pages_3", withExtension: "pdf", subdirectory: "Resources/documents")!
+
+        let documen1 = Bundle.module.url(forResource: "page_1", withExtension: "pdf", subdirectory: "Resources/documents")!
+
+        logger.info("Starting to flatten files")
+
+        let startTime = Date()
+        let splitPDFs = try await client.flattenPDF(
+            documents: [
+                "page_1.pdf": try Data(contentsOf: documen1),
+                "pages_3.pdf": try Data(contentsOf: document),
+            ],
+            waitTimeout: 10
+        )
+
+        let duration = Date().timeIntervalSince(startTime)
+
+        let contentLength = splitPDFs.headers.first(name: "Content-Length").flatMap(Int.init) ?? 0
+
+        logger.info("Flattened PDF size: \(contentLength) bytes, completed in \(String(format: "%.2f", duration)) seconds")
+
+        // Save the converted PDF file
+        let outputPath = "\(baseOutputPath)/flattened_pdfs.zip"
         try await client.writeToFile(splitPDFs, at: outputPath)
         logger.info("Saved Zip file to \(outputPath)")
     }
