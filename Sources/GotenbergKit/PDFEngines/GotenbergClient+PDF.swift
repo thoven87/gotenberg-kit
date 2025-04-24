@@ -21,7 +21,7 @@ extension GotenbergClient {
     ///   - documents: Dictionary of PDF file data to be merged
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
     /// - Returns: GotenbergResponse containing the merged PDF
-    public func mergeWithPdfEngines(
+    public func mergeWithPDFEngines(
         documents: [String: Data],
         options: PDFEngineOptions = PDFEngineOptions(),
         waitTimeout: TimeInterval = 30
@@ -101,7 +101,7 @@ extension GotenbergClient {
     ///   - filePaths: Array of file paths to PDFs that should be merged
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server to process the request
     /// - Returns: GotenbergResponse containing the merged PDF
-    public func mergeWithPdfEngines(
+    public func mergeWithPDFEngines(
         filePaths: [String],
         options: PDFEngineOptions = PDFEngineOptions(),
         waitTimeout: TimeInterval = 30
@@ -113,7 +113,7 @@ extension GotenbergClient {
             pdfFiles[url.lastPathComponent] = try Data(contentsOf: url)
         }
 
-        return try await mergeWithPdfEngines(
+        return try await mergeWithPDFEngines(
             documents: pdfFiles,
             options: options,
             waitTimeout: waitTimeout
@@ -125,7 +125,7 @@ extension GotenbergClient {
     ///   - urls: Array of URLs to PDFs that should be merged
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server to process the request
     /// - Returns: Data containing the merged PDF
-    public func mergeWithPdfEngines(
+    public func mergeWithPDFEngines(
         urls: [URL],
         waitTimeout: TimeInterval = 30,
         options: PDFEngineOptions = PDFEngineOptions(),
