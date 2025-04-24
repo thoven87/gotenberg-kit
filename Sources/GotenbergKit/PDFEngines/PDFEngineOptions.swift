@@ -23,7 +23,6 @@ public struct PDFEngineOptions: Sendable {
     /// PDF Format
     public var format: PDFFormat?
 
-    //public splitMode
     private let logger = Logger(label: "PDFEngineOptions")
 
     public init(
