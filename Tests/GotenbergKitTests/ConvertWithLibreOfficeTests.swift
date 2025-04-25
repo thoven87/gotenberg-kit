@@ -95,17 +95,15 @@ struct ConvertWithLibreOfficeTests {
             "MTA_Subway_Major_Incidents__Beginning_2020.csv": document3,
         ]
 
-        let options = try PageProperties()
-            .mergeFiles()
-            .addMetaData(metadata)
-            .flattenDocuments()
-            .addPDFFormat(.A1B)
-            .build()
-
         // Convert and merge
         let mergedPDF = try await client.convertWithLibreOffice(
             documents: documents,
-            options: options,
+            options: LibreOfficeConversionOptions(
+                merge: true,
+                pdfFormat: .A1B,
+                metadata: metadata,
+                flatten: true
+            ),
             waitTimeout: 90  // Longer timeout for multiple documents
         )
 

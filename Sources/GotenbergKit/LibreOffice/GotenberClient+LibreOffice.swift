@@ -23,7 +23,7 @@ extension GotenbergClient {
     /// - Returns: Async Sequence  containing the converted PDF
     public func convertWithLibreOffice(
         documents: [String: Data],
-        options: PageProperties = PageProperties(),
+        options: LibreOfficeConversionOptions = LibreOfficeConversionOptions(),
         waitTimeout: TimeInterval = 30,
         clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
@@ -72,7 +72,7 @@ extension GotenbergClient {
     /// - Returns: Async Sequence  containing the converted PDF
     public func convertWithLibreOffice(
         urls: [DownloadFrom],
-        options: PageProperties = PageProperties(),
+        options: LibreOfficeConversionOptions = LibreOfficeConversionOptions(),
         waitTimeout: TimeInterval = 5,
         clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
