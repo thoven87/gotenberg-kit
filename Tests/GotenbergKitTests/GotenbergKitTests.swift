@@ -349,4 +349,18 @@ struct GokenbergKitTests {
         )
         #expect(result.isEmpty == false)
     }
+
+    @Test
+    func testIsFileSupported() {
+        let filename = "test.pdf"
+        #expect(GotenbergClient.isLibreOfficeSupportedFormat(filename) == true)
+        let nextFilename = "test.txt"
+        #expect(GotenbergClient.isLibreOfficeSupportedFormat(nextFilename) == true)
+
+        let filenameWithoutExtension = "test"
+        #expect(GotenbergClient.isLibreOfficeSupportedFormat(filenameWithoutExtension) == false)
+
+        let contentType = "application/pdf"
+        #expect(GotenbergClient.isFileSupported(contentType) == true)
+    }
 }
