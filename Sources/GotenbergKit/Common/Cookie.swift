@@ -26,4 +26,20 @@ public struct Cookie: Codable, Sendable {
         case strict = "Strict"
         case lax = "Lax"
     }
+
+    public init(
+        name: String,
+        value: String,
+        domain: String,
+        path: String? = nil,
+        secure: Bool? = nil,
+        httpOnly: Bool? = nil
+    ) {
+        self.name = name
+        self.value = value
+        self.domain = domain
+        self.path = path
+        self.secure = secure
+        self.httpOnly = httpOnly
+    }
 }
