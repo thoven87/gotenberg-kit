@@ -383,5 +383,5 @@ let response = try await client.flattenPDF(
 
 #### File Generation
 
-It is just a complementary function that takes the `GotenbergResponse` returned by any functions beside readPDFMetadata, and a
+`client.writeToFile` is just a complementary function that takes the `GotenbergResponse` returned by any functions beside readPDFMetadata, and a
 chosen `filepath` with name to generate a PDF file or zip file. Note that note that this function will not create sub directories if not already exist.
