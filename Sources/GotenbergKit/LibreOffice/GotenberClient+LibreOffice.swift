@@ -19,11 +19,13 @@ extension GotenbergClient {
     ///   - documents: The  documents (filename.ext, data) to convert
     ///   - options: LibreOffice Conversion Options
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
     /// - Returns: Async Sequence  containing the converted PDF
     public func convertWithLibreOffice(
         documents: [String: Data],
         options: PageProperties = PageProperties(),
-        waitTimeout: TimeInterval = 30
+        waitTimeout: TimeInterval = 30,
+        clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         guard !documents.isEmpty else {
             throw GotenbergError.noFilesProvided
@@ -49,11 +51,14 @@ extension GotenbergClient {
 
         let values = options.formValues
 
+        var headers: [String: String] = clientHTTPHeaders
+        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
+
         return try await sendFormRequest(
             route: "/forms/libreoffice/convert",
             files: files,
             values: values,
-            headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
+            headers: headers
         )
     }
 
@@ -63,11 +68,13 @@ extension GotenbergClient {
     ///   - urls: The http | https URL of the files to convert
     ///   - options: LibreOffice Conversion Options
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
     /// - Returns: Async Sequence  containing the converted PDF
     public func convertWithLibreOffice(
         urls: [DownloadFrom],
         options: PageProperties = PageProperties(),
-        waitTimeout: TimeInterval = 5
+        waitTimeout: TimeInterval = 5,
+        clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         guard !urls.isEmpty else {
             throw GotenbergError.noURLsProvided
@@ -82,11 +89,14 @@ extension GotenbergClient {
         var values = options.formValues
         values["downloadFrom"] = jsonString
 
+        var headers: [String: String] = clientHTTPHeaders
+        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
+
         return try await sendFormRequest(
             route: "/forms/libreoffice/convert",
             files: [],
             values: values,
-            headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
+            headers: headers
         )
     }
 }

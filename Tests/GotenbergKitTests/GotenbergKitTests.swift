@@ -49,8 +49,8 @@ struct GokenbergKitTests {
             </html>
             """
 
-        let result = try await client.convertHtml(
-            htmlContent: htmlContent.data(using: .utf8)!
+        let result = try await client.convert(
+            html: htmlContent.data(using: .utf8)!
         )
         #expect(result.status.code == 200)
         try await client.writeToFile(result, at: "\(baseOutputPath)/simple.pdf")
@@ -127,8 +127,12 @@ struct GokenbergKitTests {
 
         let htmlData = htmlWithAssets.data(using: .utf8)!
 
-        let pdfWithAssets = try await client.convertHtml(
-            htmlContent: htmlData,
+        let pdfWithAssets = try await client.convert(
+            html: htmlData,
+            header: "<div style='text-align: center; font-size: 10px;'>Generated with Gotenberg</div>".data(using: .utf8)!,
+            footer:
+                "<div style='text-align: center; font-size: 10px;'>Page <span class='pageNumber'></span> of <span class='totalPages'></span></div>"
+                .data(using: .utf8)!,
             assets: assets,
             options: ChromiumOptions(
                 paperWidth: 8.5,
@@ -137,10 +141,7 @@ struct GokenbergKitTests {
                 marginBottom: 1.0,
                 marginLeft: 1.0,
                 marginRight: 1.0,
-                printBackground: true,
-                headerHTML: "<div style='text-align: center; font-size: 10px;'>Generated with Gotenberg</div>",
-                footerHTML:
-                    "<div style='text-align: center; font-size: 10px;'>Page <span class='pageNumber'></span> of <span class='totalPages'></span></div>"
+                printBackground: true
             )
         )
 
@@ -151,7 +152,7 @@ struct GokenbergKitTests {
     @Test
     func urlToPDF() async throws {
 
-        let pdfData = try await client.convertUrl(
+        let pdfData = try await client.convert(
             url: URL(string: "https://developer.apple.com/swift")!,
             options: ChromiumOptions(
                 paperWidth: 11.0,
@@ -163,7 +164,7 @@ struct GokenbergKitTests {
                 printBackground: true,
                 landscape: true,
                 scale: 1.0,
-                waitDelay: 2.0,  // Wait for page to fully load
+                waitDelay: 2,  // Wait for page to fully load
                 userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
                 extraHttpHeaders: [
                     "Accept-Language": "en-US",
@@ -294,25 +295,20 @@ struct GokenbergKitTests {
     }
 
     @Test
-    func batchProcessingURLToPDF() async {
-        // MARK: - Batch Processing Example
-        /// Example: Process multiple conversions in parallel
-        // List of URLs to convert
+    func batchProcessingURLToPDF() async throws {
         let urls = [
-            //"https://www.example.com",
             "https://github.com",
             "https://developer.apple.com",
             "https://swift.org",
         ].map { URL(string: $0)! }
 
+        typealias Response = [URL: GotenbergClient.GotenbergResponse]
+
         // Use a task group for parallel processing
-        await withThrowingTaskGroup(of: (URL, GotenbergClient.GotenbergResponse).self) { group in
+        let response = try await withThrowingTaskGroup(of: (URL, GotenbergClient.GotenbergResponse).self) { group -> Response in
             for url in urls {
-                let client = GotenbergClient(
-                    baseURL: URL(string: serverURL)!
-                )
                 group.addTask {
-                    let pdfData = try await client.convertUrl(
+                    let pdfData = try await client.convert(
                         url: url,
                         options: ChromiumOptions(
                             printBackground: true,
@@ -322,18 +318,22 @@ struct GokenbergKitTests {
                     return (url, pdfData)
                 }
             }
+
+            var result: Response = [:]
+            for try await (url, pdfData) in group {
+                result[url] = pdfData
+            }
+            return result
         }
+
+        #expect(response.count == urls.count)
 
         logger.info("All batch conversions completed")
     }
 
     @Test
     func batchProcessingURLToPNG() async throws {
-        // MARK: - Batch Processing Example
-        /// Example: Process multiple conversions in parallel
-        // List of URLs to convert
         let urls = [
-            //"https://www.example.com",
             "https://github.com",
             "https://developer.apple.com",
             "https://swift.org",
