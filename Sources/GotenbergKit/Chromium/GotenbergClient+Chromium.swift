@@ -14,16 +14,22 @@ extension GotenbergClient {
 
     /// Convert HTML content to PDF
     /// - Parameters:
-    ///   - htmlContent: The HTML content as Data
+    ///   - html: The HTML content as Data
+    ///   - header: HTML header
+    ///   - footer: HTML footer
     ///   - assets: Optional dictionary of assets keyed by filename
     ///   - options: Chromium conversion options
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
     /// - Returns: Data containing the converted PDF
-    public func convertHtml(
-        htmlContent: Data,
+    public func convert(
+        html: Data,
+        header: Data? = nil,
+        footer: Data? = nil,
         assets: [String: Data] = [:],
         options: ChromiumOptions = ChromiumOptions(),
-        waitTimeout: TimeInterval = 30
+        waitTimeout: TimeInterval = 30,
+        clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         logger.debug("Converting HTML to PDF")
 
@@ -32,9 +38,31 @@ extension GotenbergClient {
                 name: "files",
                 filename: "index.html",
                 contentType: "text/html",
-                data: htmlContent
+                data: html
             )
         ]
+
+        if let header = header {
+            files.append(
+                FormFile(
+                    name: "files",
+                    filename: "header.html",
+                    contentType: "text/html",
+                    data: header
+                )
+            )
+        }
+
+        if let footer = footer {
+            files.append(
+                FormFile(
+                    name: "files",
+                    filename: "footer.html",
+                    contentType: "text/html",
+                    data: footer
+                )
+            )
+        }
 
         // Add assets
         for (filename, data) in assets {
@@ -48,11 +76,14 @@ extension GotenbergClient {
             )
         }
 
+        var headers: [String: String] = clientHTTPHeaders
+        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
+
         return try await sendFormRequest(
             route: "/forms/chromium/convert/html",
             files: files,
             values: options.formValues,
-            headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
+            headers: headers
         )
     }
 
@@ -61,24 +92,57 @@ extension GotenbergClient {
     /// Convert a web page URL to PDF
     /// - Parameters:
     ///   - url: The URL to convert
+    ///   - header: HTML header
+    ///   - footer: HTML footer
     ///   - options: Chromium conversion options
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
     /// - Returns: Data containing the converted PDF
-    public func convertUrl(
+    public func convert(
         url: URL,
+        header: Data? = nil,
+        footer: Data? = nil,
         options: ChromiumOptions = ChromiumOptions(),
-        waitTimeout: TimeInterval = 30
+        waitTimeout: TimeInterval = 30,
+        clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         logger.debug("Converting URL to PDF: \(url.absoluteString)")
 
         var values = options.formValues
         values["url"] = url.absoluteString
 
+        var files: [FormFile] = []
+
+        if let header = header {
+            files.append(
+                FormFile(
+                    name: "files",
+                    filename: "header.html",
+                    contentType: "text/html",
+                    data: header
+                )
+            )
+        }
+
+        if let footer = footer {
+            files.append(
+                FormFile(
+                    name: "files",
+                    filename: "footer.html",
+                    contentType: "text/html",
+                    data: footer
+                )
+            )
+        }
+
+        var headers: [String: String] = clientHTTPHeaders
+        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
+
         return try await sendFormRequest(
             route: "/forms/chromium/convert/url",
-            files: [],
+            files: files,
             values: values,
-            headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
+            headers: headers
         )
     }
 
@@ -90,12 +154,14 @@ extension GotenbergClient {
     ///   - assets: Optional dictionary of assets keyed by filename
     ///   - options: Chromium conversion options
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
     /// - Returns: Data containing the converted PDF
     public func convertMarkdown(
         files: [String: Data],
         assets: [String: Data] = [:],
         options: ChromiumOptions = ChromiumOptions(),
-        waitTimeout: TimeInterval = 30
+        waitTimeout: TimeInterval = 30,
+        clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         guard !files.isEmpty else {
             throw GotenbergError.noFilesProvided
@@ -129,11 +195,14 @@ extension GotenbergClient {
             )
         }
 
+        var headers: [String: String] = clientHTTPHeaders
+        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
+
         return try await sendFormRequest(
             route: "/forms/chromium/convert/markdown",
             files: formFiles,
             values: options.formValues,
-            headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
+            headers: headers
         )
     }
 
@@ -142,11 +211,13 @@ extension GotenbergClient {
     ///   - urls: Array of URLs to convert
     ///   - options: Chromium conversion options
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
     /// - Returns: Data containing the merged PDF
-    public func convertUrlAndMerge(
+    public func convertAndMerge(
         urls: [URL],
         options: ChromiumOptions = ChromiumOptions(),
-        waitTimeout: TimeInterval = 60
+        waitTimeout: TimeInterval = 60,
+        clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         guard !urls.isEmpty else {
             throw GotenbergError.noFilesProvided
@@ -157,11 +228,16 @@ extension GotenbergClient {
         // Convert each URL to PDF
         let pdfData = try await withThrowingTaskGroup(of: (String, Data).self) { group -> [String: Data] in
             for (index, url) in urls.enumerated() {
+
+                var headers: [String: String] = clientHTTPHeaders
+                headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
+
                 group.addTask {
-                    let pdfData = try await convertUrl(
+                    let pdfData = try await convert(
                         url: url,
                         options: options,
-                        waitTimeout: waitTimeout
+                        waitTimeout: waitTimeout,
+                        clientHTTPHeaders: headers
                     )
                     let host = url.host ?? "unknown"
                     let path = url.path.isEmpty ? "page_\(index)" : url.path

@@ -148,7 +148,7 @@ public struct GotenbergClient: Sendable {
         let timeout = TimeInterval(headers["Gotenberg-Wait-Timeout"] ?? "30") ?? 30
         let response = try await httpClient.execute(
             request,
-            timeout: .seconds(Int64(timeout))
+            timeout: .seconds(Int64(timeout + 2.5))
         )
 
         // Validate the response status
@@ -201,7 +201,7 @@ public struct GotenbergClient: Sendable {
     /// Write a Gotenberg Response to a path
     /// - Parameters:
     ///   - response: The API response
-    func writeToFile(_ response: GotenbergResponse, at path: String, options: Data.WritingOptions = []) async throws {
+    public func writeToFile(_ response: GotenbergResponse, at path: String, options: Data.WritingOptions = []) async throws {
         try await toData(response).write(
             to: URL(fileURLWithPath: path),
             options: options

@@ -77,7 +77,7 @@ Gotenberg introduces basic authentication support starting from version [8.4.0](
 docker run --rm -p 3000:3000 \
 -e GOTENBERG_API_BASIC_AUTH_USERNAME=gotenberg \
 -e GOTENBERG_API_BASIC_AUTH_PASSWORD=password \
-gotenberg/gotenberg:8.4.0 gotenberg --api-enable-basic-auth
+gotenberg/gotenberg:8 gotenberg --api-enable-basic-auth
 
 ```
 
@@ -101,13 +101,17 @@ To implement advanced authentication or add custom HTTP headers to your requests
 For example, you can include a Bearer token for authentication along with a custom header as follows:
 
 ```swift
-let token = try await generateToken();
-
 let client = GotenbergClient(
     baseURL: URL(
         string: ProcessInfo.processInfo.environment["GOTENBERG_URL"] ?? "http://localhost:7100"
-    )!,
-    customHttpHeaders: [
+    )!
+)
+
+let token = try await generateToken()
+
+let response = try await client.convert(
+    url: URL(string: "https://swift.org")!,
+    clientHTTPHeaders: [
         "Authorization": "Bearer \(token)",
         "X-Custom-Header": "value",
     ]
@@ -122,7 +126,7 @@ Gotenberg's [routes](https://gotenberg.dev/docs/routes)
 
 ### Chromium
 
-`GotenbergKit` client comes with a `convertUrl`, `convertHtml` and `convertMarkdown` functions that call one of Chromium's [routes](https://gotenberg.dev/docs/modules/chromium#routes) to convert `html` and `markdown` files, or a `url` to a `GotenbergResponse` that contains the `Response` which holds the content of the converted PDF file.
+`GotenbergKit` client comes with a `convert` function that call one of Chromium's [routes](https://gotenberg.dev/docs/modules/chromium#routes) to convert `html`, `markdown` files, or a `url` to a `GotenbergResponse` which holds the content of the converted PDF file.
 
 `convert` expects two parameters; the first parameter represents what will be converted (i.e. `url`, `html`, or `markdown` files), and the second one is a `PageProperties` parameter.
 

@@ -14,16 +14,18 @@ extension GotenbergClient {
 
     /// Capture a screenshot of HTML content
     /// - Parameters:
-    ///   - htmlContent: The HTML content as Data
+    ///   - html: The HTML content as Data
     ///   - assets: Optional dictionary of assets keyed by filename
     ///   - options: Screenshot options
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
     /// - Returns: GotenbergResponse containing the screenshot image
     public func capture(
-        htmlContent: Data,
+        html: Data,
         assets: [String: Data] = [:],
         options: ScreenshotOptions = ScreenshotOptions(),
-        waitTimeout: TimeInterval = 30
+        waitTimeout: TimeInterval = 30,
+        clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         logger.debug("Capturing screenshot of HTML")
 
@@ -32,7 +34,7 @@ extension GotenbergClient {
                 name: "files",
                 filename: "index.html",
                 contentType: "text/html",
-                data: htmlContent
+                data: html
             )
         ]
 
@@ -48,11 +50,14 @@ extension GotenbergClient {
             )
         }
 
+        var headers: [String: String] = clientHTTPHeaders
+        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
+
         return try await sendFormRequest(
             route: "/forms/chromium/screenshot/html",
             files: files,
             values: options.formValues,
-            headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
+            headers: headers
         )
     }
 
@@ -65,12 +70,14 @@ extension GotenbergClient {
     ///   - assets: Optional dictionary of assets keyed by filename
     ///   - options: Screenshot options
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
     /// - Returns: GotenbergResponse containing the screenshot image
     public func capture(
         html: Data,
         markdown: Data,
         options: ScreenshotOptions = ScreenshotOptions(),
-        waitTimeout: TimeInterval = 30
+        waitTimeout: TimeInterval = 30,
+        clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         logger.debug("Capturing screenshot of Markdown")
 
@@ -89,36 +96,42 @@ extension GotenbergClient {
             ),
         ]
 
+        var headers: [String: String] = clientHTTPHeaders
+        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
+
         return try await sendFormRequest(
             route: "/forms/chromium/screenshot/markdown",
             files: files,
             values: options.formValues,
-            headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
+            headers: headers
         )
     }
 
     /// Capture a screenshot of HTML content from a string
     /// - Parameters:
-    ///   - htmlString: The HTML content as a string
+    ///   - html: The HTML content as a string
     ///   - assets: Optional dictionary of assets keyed by filename
     ///   - options: Screenshot options
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
     /// - Returns: GotenbergResponse containing the screenshot image
     public func capture(
-        htmlString: String,
+        html: String,
         assets: [String: Data] = [:],
         options: ScreenshotOptions = ScreenshotOptions(),
-        waitTimeout: TimeInterval = 30
+        waitTimeout: TimeInterval = 30,
+        clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
-        guard let htmlData = htmlString.data(using: .utf8) else {
+        guard let htmlData = html.data(using: .utf8) else {
             throw GotenbergError.invalidInput(message: "Failed to encode HTML string as UTF-8")
         }
 
         return try await capture(
-            htmlContent: htmlData,
+            html: htmlData,
             assets: assets,
             options: options,
-            waitTimeout: waitTimeout
+            waitTimeout: waitTimeout,
+            clientHTTPHeaders: clientHTTPHeaders
         )
     }
 
@@ -129,22 +142,27 @@ extension GotenbergClient {
     ///   - url: The URL to capture
     ///   - options: Screenshot options
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
     /// - Returns: Data containing the screenshot image
     public func capture(
         url: URL,
         options: ScreenshotOptions = ScreenshotOptions(),
-        waitTimeout: TimeInterval = 30
+        waitTimeout: TimeInterval = 30,
+        clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         logger.debug("Capturing screenshot of URL: \(url.absoluteString)")
 
         var values = options.formValues
         values["url"] = url.absoluteString
 
+        var headers: [String: String] = clientHTTPHeaders
+        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
+
         return try await sendFormRequest(
             route: "/forms/chromium/screenshot/url",
             files: [],
             values: values,
-            headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
+            headers: headers
         )
     }
 
@@ -155,11 +173,13 @@ extension GotenbergClient {
     ///   - urls: Array of URLs to capture
     ///   - options: Screenshot options
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
     /// - Returns: Dictionary mapping URLs to their screenshot data
     public func capture(
         urls: [URL],
         options: ScreenshotOptions = ScreenshotOptions(),
-        waitTimeout: TimeInterval = 60
+        waitTimeout: TimeInterval = 60,
+        clientHTTPHeaders: [String: String] = [:]
     ) async throws -> [URL: GotenbergResponse] {
         guard !urls.isEmpty else {
             throw GotenbergError.noURLsProvided
@@ -175,7 +195,8 @@ extension GotenbergClient {
                     let screenshotData = try await capture(
                         url: url,
                         options: options,
-                        waitTimeout: waitTimeout
+                        waitTimeout: waitTimeout,
+                        clientHTTPHeaders: clientHTTPHeaders
                     )
                     return (url, screenshotData)
                 }

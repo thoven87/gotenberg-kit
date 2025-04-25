@@ -17,11 +17,13 @@ extension GotenbergClient {
     ///   - documents: Dictionary of PDF file data to be merged
     ///   - options: PDFEngineOptions
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
     /// - Returns: GotenbergResponse containing the merged PDF
     public func mergeWithPDFEngines(
         documents: [String: Data],
         options: PDFEngineOptions = PDFEngineOptions(),
-        waitTimeout: TimeInterval = 30
+        waitTimeout: TimeInterval = 30,
+        clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         guard !documents.isEmpty else {
             throw GotenbergError.noPDFsProvided
@@ -45,12 +47,15 @@ extension GotenbergClient {
             logger.debug("Document size: \(data.count) bytes")
         }
 
+        var headers: [String: String] = clientHTTPHeaders
+        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
+
         // Send request to Gotenberg
         return try await sendFormRequest(
             route: "/forms/pdfengines/merge",
             files: files,
             values: options.formValues,
-            headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
+            headers: headers
         )
     }
 
@@ -59,11 +64,13 @@ extension GotenbergClient {
     ///   - filePaths: Array of file paths to PDFs that should be merged
     ///   - options: PDFEngineOptions
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server to process the request
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
     /// - Returns: GotenbergResponse containing the merged PDF
     public func mergeWithPDFEngines(
         filePaths: [String],
         options: PDFEngineOptions = PDFEngineOptions(),
-        waitTimeout: TimeInterval = 30
+        waitTimeout: TimeInterval = 30,
+        clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         var pdfFiles: [String: Data] = [:]
 
@@ -75,7 +82,8 @@ extension GotenbergClient {
         return try await mergeWithPDFEngines(
             documents: pdfFiles,
             options: options,
-            waitTimeout: waitTimeout
+            waitTimeout: waitTimeout,
+            clientHTTPHeaders: clientHTTPHeaders
         )
     }
 
@@ -84,11 +92,13 @@ extension GotenbergClient {
     ///   - urls: Array of URLs to PDFs that should be merged
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server to process the request
     ///   - options: PDFEngineOptions
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
     /// - Returns: GotenbergResponse containing the merged PDF
     public func mergeWithPDFEngines(
         urls: [DownloadFrom],
         waitTimeout: TimeInterval = 30,
-        options: PDFEngineOptions = PDFEngineOptions()
+        options: PDFEngineOptions = PDFEngineOptions(),
+        clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         guard !urls.isEmpty else {
             throw GotenbergError.noPDFsProvided
@@ -105,11 +115,14 @@ extension GotenbergClient {
 
         logger.debug("downloadFrom JSON: \(jsonString)")
 
+        var headers: [String: String] = clientHTTPHeaders
+        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
+
         return try await sendFormRequest(
             route: "/forms/pdfengines/merge",
             files: [],
             values: values,
-            headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
+            headers: headers
         )
     }
 
@@ -118,11 +131,13 @@ extension GotenbergClient {
     ///   - urls: Array of URLs of PDFs that should be converted
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server to process the request
     ///   - options: PDFEngineOptions
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
     /// - Returns: GotenbergResponse containing the converted PDF
     public func convertWithPDFEngines(
         urls: [DownloadFrom],
         waitTimeout: TimeInterval = 500,
-        options: PDFEngineOptions = PDFEngineOptions()
+        options: PDFEngineOptions = PDFEngineOptions(),
+        clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         guard !urls.isEmpty else {
             throw GotenbergError.noPDFsProvided
@@ -139,11 +154,14 @@ extension GotenbergClient {
 
         logger.debug("downloadFrom JSON: \(jsonString)")
 
+        var headers: [String: String] = clientHTTPHeaders
+        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
+
         return try await sendFormRequest(
             route: "/forms/pdfengines/convert",
             files: [],
             values: values,
-            headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
+            headers: headers
         )
     }
 
@@ -152,11 +170,13 @@ extension GotenbergClient {
     ///   - documents: Dictionary of PDF file data to be converted
     ///   - options: PDFEngineOptions
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
     /// - Returns: GotenbergResponse containing the converted PDF
     public func convertWithPDFEngines(
         documents: [String: Data],
         options: PDFEngineOptions = PDFEngineOptions(),
-        waitTimeout: TimeInterval = 500
+        waitTimeout: TimeInterval = 500,
+        clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         guard !documents.isEmpty else {
             throw GotenbergError.noPDFsProvided
@@ -180,12 +200,15 @@ extension GotenbergClient {
             logger.debug("Document size: \(data.lazy.count) bytes")
         }
 
+        var headers: [String: String] = clientHTTPHeaders
+        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
+
         // Send request to Gotenberg
         return try await sendFormRequest(
             route: "/forms/pdfengines/convert",
             files: files,
             values: options.formValues,
-            headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
+            headers: headers
         )
     }
 
@@ -194,6 +217,7 @@ extension GotenbergClient {
     ///   - documents: Dictionary of PDF file data to be split into multiple files
     ///   - options: SplitPDFOptions with splitSpan defaults to 1 and splitMode to intervals
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
     /// - Returns: GotenbergResponse containing a zip file if splitUnify is true or just one PDF if splitUnify is false
     public func splitPDF(
         documents: [String: Data],
@@ -201,7 +225,8 @@ extension GotenbergClient {
             splitSpan: "1",
             splitMode: .intervals
         ),
-        waitTimeout: TimeInterval = 500
+        waitTimeout: TimeInterval = 500,
+        clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         guard !documents.isEmpty else {
             throw GotenbergError.noPDFsProvided
@@ -229,12 +254,15 @@ extension GotenbergClient {
             logger.debug("Document size: \(data.lazy.count) bytes")
         }
 
+        var headers: [String: String] = clientHTTPHeaders
+        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
+
         // Send request to Gotenberg
         return try await sendFormRequest(
             route: "/forms/pdfengines/split",
             files: files,
             values: options.formValues,
-            headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
+            headers: headers
         )
     }
 
@@ -243,6 +271,7 @@ extension GotenbergClient {
     ///   - urls: Array of DownloadFrom
     ///   - options: SplitPDFOptions with splitSpan defaults to 1 and splitMode to intervals
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
     /// - Returns: GotenbergResponse containing a zip file if splitUnify is true or just one PDF if splitUnify is false
     public func splitPDF(
         urls: [DownloadFrom],
@@ -250,7 +279,8 @@ extension GotenbergClient {
             splitSpan: "1",
             splitMode: .intervals
         ),
-        waitTimeout: TimeInterval = 500
+        waitTimeout: TimeInterval = 500,
+        clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         guard !urls.isEmpty else {
             throw GotenbergError.noURLsProvided
@@ -265,11 +295,14 @@ extension GotenbergClient {
         var values = options.formValues
         values["downloadFrom"] = jsonString
 
+        var headers: [String: String] = clientHTTPHeaders
+        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
+
         return try await sendFormRequest(
             route: "/forms/pdfengines/split",
             files: [],
             values: values,
-            headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
+            headers: headers
         )
     }
 
@@ -277,10 +310,12 @@ extension GotenbergClient {
     /// - Parameters:
     ///   - documents: Dictionary of PDF file data to be split into multiple files
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
     /// - Returns: GotenbergResponse containing a zip file if more than one file was passed as an input
     public func flattenPDF(
         documents: [String: Data],
-        waitTimeout: TimeInterval = 500
+        waitTimeout: TimeInterval = 500,
+        clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         guard !documents.isEmpty else {
             throw GotenbergError.noPDFsProvided
@@ -304,12 +339,15 @@ extension GotenbergClient {
             logger.debug("Document size: \(data.lazy.count) bytes")
         }
 
+        var headers: [String: String] = clientHTTPHeaders
+        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
+
         // Send request to Gotenberg
         return try await sendFormRequest(
             route: "/forms/pdfengines/flatten",
             files: files,
             values: [:],
-            headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
+            headers: headers
         )
     }
 
@@ -317,10 +355,12 @@ extension GotenbergClient {
     /// - Parameters:
     ///   - urls: Array of DownloadFrom
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
     /// - Returns: GotenbergResponse containing a zip file if more than one file was passed as an input
     public func flattenPDF(
         urls: [DownloadFrom],
-        waitTimeout: TimeInterval = 500
+        waitTimeout: TimeInterval = 500,
+        clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         guard !urls.isEmpty else {
             throw GotenbergError.noURLsProvided
@@ -336,11 +376,14 @@ extension GotenbergClient {
             "downloadFrom": jsonString
         ]
 
+        var headers: [String: String] = clientHTTPHeaders
+        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
+
         return try await sendFormRequest(
             route: "/forms/pdfengines/flatten",
             files: [],
             values: values,
-            headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
+            headers: headers
         )
     }
 
@@ -349,11 +392,13 @@ extension GotenbergClient {
     ///   - documents: Dictionary of PDF file data to be split into multiple files
     ///   - metadata: See https://exiftool.org/TagNames/XMP.html#pdf for an (exhaustive?) list of available metadata.
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
     /// - Returns: GotenbergResponse containing a zip file if more than one file was passed as an input
     public func writePDFMetadata(
         documents: [String: Data],
         metadata: [String: String],
-        waitTimeout: TimeInterval = 500
+        waitTimeout: TimeInterval = 500,
+        clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         guard !documents.isEmpty else {
             throw GotenbergError.noPDFsProvided
@@ -398,12 +443,15 @@ extension GotenbergClient {
             throw GotenbergError.invalidInput(message: "Error serializing metadata")
         }
 
+        var headers: [String: String] = clientHTTPHeaders
+        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
+
         // Send request to Gotenberg
         return try await sendFormRequest(
             route: "/forms/pdfengines/metadata/write",
             files: files,
             values: values,
-            headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
+            headers: headers
         )
     }
 
@@ -412,11 +460,13 @@ extension GotenbergClient {
     ///   - documents: Dictionary of PDF file data to be split into multiple files
     ///   - metadata: See https://exiftool.org/TagNames/XMP.html#pdf for an (exhaustive?) list of available metadata.
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
     /// - Returns: GotenbergResponse containing a zip file if more than one file was passed as an input
     public func writePDFMetadata(
         urls: [DownloadFrom],
         metadata: [String: String],
-        waitTimeout: TimeInterval = 500
+        waitTimeout: TimeInterval = 500,
+        clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         guard !urls.isEmpty else {
             throw GotenbergError.noURLsProvided
@@ -451,11 +501,14 @@ extension GotenbergClient {
             throw GotenbergError.invalidInput(message: "Error serializing metadata")
         }
 
+        var headers: [String: String] = clientHTTPHeaders
+        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
+
         return try await sendFormRequest(
             route: "/forms/pdfengines/metadata/write",
             files: [],
             values: values,
-            headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
+            headers: headers
         )
     }
 
@@ -463,10 +516,12 @@ extension GotenbergClient {
     /// - Parameters:
     ///   - documents: Dictionary of PDF file data to be split into multiple files
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
     /// - Returns: GotenbergResponse containg the response of parse metadata
     public func readPDFMetadata(
         urls: [DownloadFrom],
-        waitTimeout: TimeInterval = 500
+        waitTimeout: TimeInterval = 500,
+        clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         guard !urls.isEmpty else {
             throw GotenbergError.noURLsProvided
@@ -474,11 +529,14 @@ extension GotenbergClient {
 
         logger.debug("Reading metadata for \(urls.lazy.count) PDFs from paths")
 
+        var headers: [String: String] = clientHTTPHeaders
+        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
+
         return try await sendFormRequest(
             route: "/forms/pdfengines/metadata/read",
             files: [],
             values: [:],
-            headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
+            headers: headers
         )
     }
 
@@ -486,10 +544,12 @@ extension GotenbergClient {
     /// - Parameters:
     ///   - documents: Dictionary of PDF file data to be split into multiple files
     ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
     /// - Returns: GotenbergResponse containg the response of parse metadata
     public func readPDFMetadata(
         documents: [String: Data],
-        waitTimeout: TimeInterval = 500
+        waitTimeout: TimeInterval = 500,
+        clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         guard !documents.isEmpty else {
             throw GotenbergError.noPDFsProvided
@@ -513,12 +573,15 @@ extension GotenbergClient {
             logger.debug("Document size: \(data.lazy.count) bytes")
         }
 
+        var headers: [String: String] = clientHTTPHeaders
+        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
+
         // Send request to Gotenberg
         return try await sendFormRequest(
             route: "/forms/pdfengines/metadata/read",
             files: files,
             values: [:],
-            headers: ["Gotenberg-Wait-Timeout": "\(Int(waitTimeout))"]
+            headers: headers
         )
     }
 }

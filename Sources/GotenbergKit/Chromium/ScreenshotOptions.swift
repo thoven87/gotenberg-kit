@@ -8,14 +8,6 @@ import Logging
 //
 import class Foundation.JSONEncoder
 
-// MARK: - Screenshot Options
-/// Screenshot format
-public enum ScreenshotFormat: String, Sendable {
-    case png
-    case jpeg
-    case webp
-}
-
 /// Options for customizing screenshot capture
 public struct ScreenshotOptions: Sendable {
     /// Optional format for the screenshot (png, jpeg, webp)
@@ -68,6 +60,14 @@ public struct ScreenshotOptions: Sendable {
     public var failOnConsoleExceptions: Bool
     /// Do not wait for Chromium network to be idle.
     public var skipNetworkIdleEvent: Bool
+
+    // MARK: - Screenshot Options
+    /// Screenshot format
+    public enum ScreenshotFormat: String, Sendable {
+        case png
+        case jpeg
+        case webp
+    }
 
     private let logger = Logger(label: "com.gotenberg.kit.ScreenshotOptions")
 
@@ -128,10 +128,13 @@ public struct ScreenshotOptions: Sendable {
         values["optimizeForSpeed"] = String(optimizeForSpeed)
 
         values["failOnHttpStatusCodes"] = "[\(failOnHttpStatusCodes.map(String.init).joined(separator: ","))]"
-        values["failOnResourceHttpStatusCodes"] = "[\(failOnResourceHttpStatusCodes.map(String.init).joined(separator: ","))]"
         values["failOnConsoleExceptions"] = String(failOnConsoleExceptions)
         values["skipNetworkIdleEvent"] = String(skipNetworkIdleEvent)
         values["failOnResourceLoadingFailed"] = String(failOnResourceLoadingFailed)
+
+        if !failOnResourceHttpStatusCodes.isEmpty {
+            values["failOnResourceHttpStatusCodes"] = "[\(failOnResourceHttpStatusCodes.map(String.init).joined(separator: ","))]"
+        }
 
         if let quality = quality {
             if format == .jpeg {
