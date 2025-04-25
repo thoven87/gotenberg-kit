@@ -10,5 +10,10 @@ public struct DownloadFrom: Codable {
     /// URL of the file. It MUST return a Content-Disposition header with a filename parameter.
     public var url: String
     /// The extra HTTP headers to send to the URL (JSON format).
-    public var extraHttpHeaders: [String: String]? = nil
+    public var extraHttpHeaders: [String: String]?
+
+    public init(url: String, extraHttpHeaders: [String: String]? = nil) {
+        self.url = url
+        self.extraHttpHeaders = extraHttpHeaders
+    }
 }
