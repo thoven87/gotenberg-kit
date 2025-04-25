@@ -234,13 +234,12 @@ public struct LibreOfficeConversionOptions {
 
         if let splitMode = splitMode {
             values["splitMode"] = splitMode.rawValue
+            values["splitUnify"] = splitUnify.description
         }
 
         if let splitSpan = splitSpan {
             values["splitSpan"] = splitSpan.description
         }
-
-        values["splitUnify"] = splitUnify.description
 
         if let pdfFormat = pdfFormat {
             values["pdfa"] = pdfFormat.rawValue
