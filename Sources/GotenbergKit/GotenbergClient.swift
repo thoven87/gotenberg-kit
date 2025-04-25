@@ -89,10 +89,6 @@ public struct GotenbergClient: Sendable {
         headers: [String: String]
     ) async throws -> GotenbergResponse {
 
-        defer {
-            _ = httpClient.shutdown()
-        }
-
         // Create multipart form data
         let boundary = "------------------------\(UUID().uuidString)"
         var body = Data()
