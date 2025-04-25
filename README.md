@@ -128,7 +128,7 @@ Gotenberg's [routes](https://gotenberg.dev/docs/routes)
 
 `GotenbergKit` client comes with a `convert` function that call one of Chromium's [routes](https://gotenberg.dev/docs/modules/chromium#routes) to convert `html`, `markdown` files, or a `url` to a `GotenbergResponse` which holds the content of the converted PDF file.
 
-`convert` expects two parameters; the first parameter represents what will be converted (i.e. `url`, `html`, or `markdown` files), and the second one is a `PageProperties` parameter.
+`convert` expects two parameters; the first parameter represents what will be converted (i.e. `url`, `html`, or `markdown` files), and the second one is a `ChromiumOptions` parameter.
 
 #### URL
 
@@ -194,10 +194,10 @@ Each `convert()` method takes an optional `properties` parameter of the followin
 file will look like.
 
 ```swift
-PageProperties
+ChromiumOptions
 ```
 
-In addition to the `PageProperties` customization options, the `convert()` method also accepts a set of parameters to further enhance the versatility of the conversion process.
+In addition to the `ChromiumOptions` customization options, the `convert()` method also accepts a set of parameters to further enhance the versatility of the conversion process.
 
 #### Screenshot
 Similarly, the `capture()` function takes an optional `properties` parameter of the specified type, influencing the appearance of the captured screenshot file.
