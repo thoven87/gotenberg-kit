@@ -7,8 +7,8 @@
 
 /// Download a file from a URL. It must return a Content-Disposition header with a filename parameter.
 public struct DownloadFrom: Codable {
-    /// URL to download a file from
+    /// URL of the file. It MUST return a Content-Disposition header with a filename parameter.
     public var url: String
-    /// HTTP headers for the file needed to download
+    /// The extra HTTP headers to send to the URL (JSON format).
     public var extraHttpHeaders: [String: String]? = nil
 }

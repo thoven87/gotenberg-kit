@@ -6,6 +6,7 @@
 //
 
 import struct Foundation.Data
+import class Foundation.JSONEncoder
 import struct Foundation.TimeInterval
 import struct Foundation.URL
 
@@ -140,6 +141,128 @@ extension GotenbergClient {
 
         return try await sendFormRequest(
             route: "/forms/chromium/convert/url",
+            files: files,
+            values: values,
+            headers: headers
+        )
+    }
+
+    /// Convert html from downloaded contents
+    /// - Parameters:
+    ///   - html: Array of DownloadFrom
+    ///   - header: HTML header
+    ///   - footer: HTML footer
+    ///   - options: Chromium conversion options
+    ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
+    /// - Returns: Data containing the converted PDF
+    public func convert(
+        html: [DownloadFrom],
+        header: Data? = nil,
+        footer: Data? = nil,
+        options: ChromiumOptions = ChromiumOptions(),
+        waitTimeout: TimeInterval = 30,
+        clientHTTPHeaders: [String: String] = [:]
+    ) async throws -> GotenbergResponse {
+        logger.debug("Converting \(html.lazy.count) files to PDF")
+
+        // Convert to JSON
+        let jsonData = try JSONEncoder().encode(html)
+        let jsonString = String(data: jsonData, encoding: .utf8)!
+
+        var values = options.formValues
+        values["downloadFrom"] = jsonString
+
+        var files: [FormFile] = []
+
+        if let header = header {
+            files.append(
+                FormFile(
+                    name: "files",
+                    filename: "header.html",
+                    contentType: "text/html",
+                    data: header
+                )
+            )
+        }
+
+        if let footer = footer {
+            files.append(
+                FormFile(
+                    name: "files",
+                    filename: "footer.html",
+                    contentType: "text/html",
+                    data: footer
+                )
+            )
+        }
+
+        var headers: [String: String] = clientHTTPHeaders
+        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
+
+        return try await sendFormRequest(
+            route: "/forms/chromium/convert/html",
+            files: files,
+            values: values,
+            headers: headers
+        )
+    }
+
+    /// Convert markdown files from downloaded contents
+    /// - Parameters:
+    ///   - markdown: Array of DownloadFrom
+    ///   - header: HTML header
+    ///   - footer: HTML footer
+    ///   - options: Chromium conversion options
+    ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
+    /// - Returns: Data containing the converted PDF
+    public func convert(
+        markdown: [DownloadFrom],
+        header: Data? = nil,
+        footer: Data? = nil,
+        options: ChromiumOptions = ChromiumOptions(),
+        waitTimeout: TimeInterval = 30,
+        clientHTTPHeaders: [String: String] = [:]
+    ) async throws -> GotenbergResponse {
+        logger.debug("Converting \(markdown.lazy.count) files to PDF")
+
+        // Convert to JSON
+        let jsonData = try JSONEncoder().encode(markdown)
+        let jsonString = String(data: jsonData, encoding: .utf8)!
+
+        var values = options.formValues
+        values["downloadFrom"] = jsonString
+
+        var files: [FormFile] = []
+
+        if let header = header {
+            files.append(
+                FormFile(
+                    name: "files",
+                    filename: "header.html",
+                    contentType: "text/html",
+                    data: header
+                )
+            )
+        }
+
+        if let footer = footer {
+            files.append(
+                FormFile(
+                    name: "files",
+                    filename: "footer.html",
+                    contentType: "text/html",
+                    data: footer
+                )
+            )
+        }
+
+        var headers: [String: String] = clientHTTPHeaders
+        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
+
+        return try await sendFormRequest(
+            route: "/forms/chromium/convert/markdown",
             files: files,
             values: values,
             headers: headers
