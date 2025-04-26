@@ -87,16 +87,31 @@ public struct GotenbergClient: Sendable {
     ///   - files: Array of files to include in the request
     ///   - values: Dictionary of form values to include
     ///   - headers: Additional HTTP headers to include
-    ///   - maxRetries: Max retry count
     /// - Returns: GotenbergResponse
     internal func sendFormRequest(
         route: String,
         files: [FormFile],
         values: [String: String],
         headers: [String: String],
-        currentRetries: Int = 0
     ) async throws -> GotenbergResponse {
+        try await makeRequest(route: route, files: files, values: values, headers: headers)
+    }
 
+    /// Sends a form request to Gotenberg with files and values
+    /// - Parameters:
+    ///   - route: The API route to send the request to
+    ///   - files: Array of files to include in the request
+    ///   - values: Dictionary of form values to include
+    ///   - headers: Additional HTTP headers to include
+    ///   - currentRetryCount: Current retry count
+    /// - Returns: GotenbergResponse
+    private func makeRequest(
+        route: String,
+        files: [FormFile],
+        values: [String: String],
+        headers: [String: String],
+        currentRetryCount: Int = 0
+    ) async throws -> GotenbergResponse {
         // Create multipart form data
         let boundary = "------------------------\(UUID().uuidString)"
         var body = Data()
@@ -156,19 +171,20 @@ public struct GotenbergClient: Sendable {
         )
 
         switch response.status {
-        case .gatewayTimeout, .tooManyRequests, .serviceUnavailable, .internalServerError:
-            if currentRetries > 0 {
-                let delayTime = min(exp2(Double(currentRetries)), 30)
-                let jitter = Double.random(in: -0.5...0.5)
+        case .gatewayTimeout, .tooManyRequests, .serviceUnavailable, .requestTimeout, .internalServerError:
+            let retryCount = currentRetryCount + 1
+            if retryCount < maxRetries {
+                let delayTime = min(exp2(Double(retryCount)), 30)
+                let jitter = Double.random(in: 0.1...0.5)
                 let delay = delayTime * (1 + jitter)
-                logger.debug("Gotenberg API returned \(response.status), retrying in \(delay) milliseconds...")
-                try await Task.sleep(for: .milliseconds(delay))
-                return try await sendFormRequest(
+                logger.debug("Gotenberg API returned \(response.status), retrying in \(delay) seconds with attempt count... \(retryCount)")
+                try await Task.sleep(for: .seconds(delay))
+                return try await makeRequest(
                     route: route,
                     files: files,
                     values: values,
                     headers: headers,
-                    currentRetries: maxRetries - 1
+                    currentRetryCount: retryCount
                 )
             }
 
