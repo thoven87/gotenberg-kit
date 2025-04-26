@@ -175,10 +175,10 @@ public struct GotenbergClient: Sendable {
             let retryCount = currentRetryCount + 1
             if retryCount < maxRetries {
                 let delayTime = min(exp2(Double(retryCount)), 30)
-                let jitter = Double.random(in: -0.5...0.5)
+                let jitter = Double.random(in: 0.1...0.5)
                 let delay = delayTime * (1 + jitter)
-                logger.debug("Gotenberg API returned \(response.status), retrying in \(delay) milliseconds with \(retryCount) retry attempts...")
-                try await Task.sleep(for: .milliseconds(delay))
+                logger.debug("Gotenberg API returned \(response.status), retrying in \(delay) seconds with attempt count... \(retryCount)")
+                try await Task.sleep(for: .seconds(delay))
                 return try await makeRequest(
                     route: route,
                     files: files,
