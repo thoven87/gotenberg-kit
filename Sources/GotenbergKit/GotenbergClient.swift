@@ -20,6 +20,7 @@ public struct GotenbergClient: Sendable {
     internal let password: String?
     internal let userAgent: String
     internal let customHttpHeaders: [String: String]
+    private let maxRetries: Int
 
     public typealias GotenbergResponse = HTTPClientResponse
 
@@ -37,7 +38,8 @@ public struct GotenbergClient: Sendable {
         username: String? = nil,
         password: String? = nil,
         userAgent: String = "Gotenberg Swift SDK/1.0",
-        httpClient: HTTPClient = HTTPClient.shared
+        httpClient: HTTPClient = HTTPClient.shared,
+        maxRetries: Int = 3
     ) {
         self.baseURL = baseURL
         self.logger = logger
@@ -46,6 +48,7 @@ public struct GotenbergClient: Sendable {
         self.userAgent = userAgent
         self.httpClient = httpClient
         self.customHttpHeaders = [:]
+        self.maxRetries = maxRetries
     }
 
     /// Initialize the Gotenberg client
@@ -57,6 +60,7 @@ public struct GotenbergClient: Sendable {
     ///   - userAgent: Optional userAgent for all HTTP calls to the Gotenberg server
     ///   - customHttpHeaders: For advanced authentication or add custom HTTP headers to requests to the Gotenberg server
     ///   - httpClient: HTTClient
+    ///   - maxRetries: Max retry count
     public init(
         baseURL: URL,
         logger: Logger = Logger(label: "com.gotenberg.swift"),
@@ -64,7 +68,8 @@ public struct GotenbergClient: Sendable {
         password: String? = nil,
         userAgent: String = "Gotenberg Swift SDK/1.0",
         customHttpHeaders: [String: String],
-        httpClient: HTTPClient = HTTPClient.shared
+        httpClient: HTTPClient = HTTPClient.shared,
+        maxRetries: Int = 3
     ) {
         self.baseURL = baseURL
         self.logger = logger
@@ -73,6 +78,7 @@ public struct GotenbergClient: Sendable {
         self.userAgent = userAgent
         self.customHttpHeaders = customHttpHeaders
         self.httpClient = httpClient
+        self.maxRetries = maxRetries
     }
 
     /// Sends a form request to Gotenberg with files and values
@@ -81,12 +87,14 @@ public struct GotenbergClient: Sendable {
     ///   - files: Array of files to include in the request
     ///   - values: Dictionary of form values to include
     ///   - headers: Additional HTTP headers to include
+    ///   - maxRetries: Max retry count
     /// - Returns: GotenbergResponse
     internal func sendFormRequest(
         route: String,
         files: [FormFile],
         values: [String: String],
-        headers: [String: String]
+        headers: [String: String],
+        currentRetries: Int = 0
     ) async throws -> GotenbergResponse {
 
         // Create multipart form data
@@ -146,6 +154,29 @@ public struct GotenbergClient: Sendable {
             request,
             timeout: .seconds(Int64(timeout + 2.5))
         )
+
+        switch response.status {
+        case .gatewayTimeout, .tooManyRequests, .serviceUnavailable, .internalServerError:
+            if currentRetries > 0 {
+                let delayTime = min(exp2(Double(currentRetries)), 30)
+                let jitter = Double.random(in: -0.5...0.5)
+                let delay = delayTime * (1 + jitter)
+                logger.debug("Gotenberg API returned \(response.status), retrying in \(delay) milliseconds...")
+                try await Task.sleep(for: .milliseconds(delay))
+                return try await sendFormRequest(
+                    route: route,
+                    files: files,
+                    values: values,
+                    headers: headers,
+                    currentRetries: maxRetries - 1
+                )
+            }
+
+            throw GotenbergError.apiError(statusCode: response.status.code, message: "Exhausted retry attempts")
+        case .ok:
+            return response
+        default: break
+        }
 
         // Validate the response status
         guard response.status == .ok else {
