@@ -1,13 +1,9 @@
 # GotenbergKit
 
-<p align="center">
-    <a href="https://swift.org">
-        <img src="https://img.shields.io/badge/swift-6.0-f05138.svg"/>
-    </a>
-    <a href="https://github.com/thoven87/gotenberg-kit/actions?query=workflow%3ACI">
-        <img src="https://github.com/thoven87/gotenberg-kit/actions/workflows/ci.yml/badge.svg?branch=main"/>
-    </a>
-</p>
+[![](https://img.shields.io/github/v/release/thoven87/gotenberg-kit?include_prereleases)](https://github.com/thoven87/gotenberg-kit/releases)
+<img src="https://img.shields.io/badge/swift-6.0-f05138.svg"/>
+[![Platform - macOS Linux](https://github.com/thoven87/gotenberg-kit)]([https://swiftpackageindex.com/apple/swift-container-plugin](https://github.com/thoven87/gotenberg-kit))
+[![CI](https://github.com/thoven87/gotenberg-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/thoven87/gotenberg-kit/actions/workflows/ci.yml)
 
 A Swift library that interacts with [Gotenberg](https://gotenberg.dev/)'s different modules to convert a variety of document formats to PDF files.
 
