@@ -26,7 +26,7 @@ let package = Package(
             name: "GotenbergKit",
             dependencies: [
                 .product(name: "AsyncHTTPClient", package: "async-http-client"),
-                .product(name: "Logging", package: "swift-log")
+                .product(name: "Logging", package: "swift-log"),
             ]
         ),
         .testTarget(
