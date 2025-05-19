@@ -24,7 +24,7 @@ extension GotenbergClient {
         html: Data,
         assets: [String: Data] = [:],
         options: ScreenshotOptions = ScreenshotOptions(),
-        waitTimeout: TimeInterval = 30,
+        waitTimeout: TimeInterval = 120,
         clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         logger.debug("Capturing screenshot of HTML")
@@ -76,7 +76,7 @@ extension GotenbergClient {
         html: Data,
         markdown: Data,
         options: ScreenshotOptions = ScreenshotOptions(),
-        waitTimeout: TimeInterval = 30,
+        waitTimeout: TimeInterval = 120,
         clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         logger.debug("Capturing screenshot of Markdown")
@@ -119,7 +119,7 @@ extension GotenbergClient {
         html: String,
         assets: [String: Data] = [:],
         options: ScreenshotOptions = ScreenshotOptions(),
-        waitTimeout: TimeInterval = 30,
+        waitTimeout: TimeInterval = 120,
         clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         guard let htmlData = html.data(using: .utf8) else {
@@ -147,7 +147,7 @@ extension GotenbergClient {
     public func capture(
         url: URL,
         options: ScreenshotOptions = ScreenshotOptions(),
-        waitTimeout: TimeInterval = 30,
+        waitTimeout: TimeInterval = 120,
         clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         logger.debug("Capturing screenshot of URL: \(url.absoluteString)")
@@ -178,7 +178,7 @@ extension GotenbergClient {
     public func capture(
         urls: [URL],
         options: ScreenshotOptions = ScreenshotOptions(),
-        waitTimeout: TimeInterval = 60,
+        waitTimeout: TimeInterval = 120,
         clientHTTPHeaders: [String: String] = [:]
     ) async throws -> [URL: GotenbergResponse] {
         guard !urls.isEmpty else {

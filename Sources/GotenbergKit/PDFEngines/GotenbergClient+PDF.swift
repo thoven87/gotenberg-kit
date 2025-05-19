@@ -22,7 +22,7 @@ extension GotenbergClient {
     public func mergeWithPDFEngines(
         documents: [String: Data],
         options: PDFEngineOptions = PDFEngineOptions(),
-        waitTimeout: TimeInterval = 30,
+        waitTimeout: TimeInterval = 500,
         clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         guard !documents.isEmpty else {
@@ -69,7 +69,7 @@ extension GotenbergClient {
     public func mergeWithPDFEngines(
         filePaths: [String],
         options: PDFEngineOptions = PDFEngineOptions(),
-        waitTimeout: TimeInterval = 30,
+        waitTimeout: TimeInterval = 500,
         clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         var pdfFiles: [String: Data] = [:]
@@ -96,7 +96,7 @@ extension GotenbergClient {
     /// - Returns: GotenbergResponse containing the merged PDF
     public func mergeWithPDFEngines(
         urls: [DownloadFrom],
-        waitTimeout: TimeInterval = 30,
+        waitTimeout: TimeInterval = 500,
         options: PDFEngineOptions = PDFEngineOptions(),
         clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
