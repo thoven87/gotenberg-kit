@@ -164,10 +164,10 @@ public struct GotenbergClient: Sendable {
         logger.debug("Sending request to Gotenberg: \(endpoint.absoluteString)")
 
         // Execute the request
-        let timeout = TimeInterval(headers["Gotenberg-Wait-Timeout"] ?? "30") ?? 30
+        let timeout = Int64(headers["Gotenberg-Wait-Timeout"] ?? "60") ?? 60
         let response = try await httpClient.execute(
             request,
-            timeout: .seconds(Int64(timeout + 2.5))
+            deadline: .now() + .seconds(timeout)
         )
 
         switch response.status {
