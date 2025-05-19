@@ -29,7 +29,7 @@ extension GotenbergClient {
         footer: Data? = nil,
         assets: [String: Data] = [:],
         options: ChromiumOptions = ChromiumOptions(),
-        waitTimeout: TimeInterval = 30,
+        waitTimeout: TimeInterval = 120,
         clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         logger.debug("Converting HTML to PDF")
@@ -104,7 +104,7 @@ extension GotenbergClient {
         header: Data? = nil,
         footer: Data? = nil,
         options: ChromiumOptions = ChromiumOptions(),
-        waitTimeout: TimeInterval = 30,
+        waitTimeout: TimeInterval = 120,
         clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         logger.debug("Converting URL to PDF: \(url.absoluteString)")
@@ -161,7 +161,7 @@ extension GotenbergClient {
         header: Data? = nil,
         footer: Data? = nil,
         options: ChromiumOptions = ChromiumOptions(),
-        waitTimeout: TimeInterval = 30,
+        waitTimeout: TimeInterval = 120,
         clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         logger.debug("Converting \(html.lazy.count) files to PDF")
@@ -222,7 +222,7 @@ extension GotenbergClient {
         header: Data? = nil,
         footer: Data? = nil,
         options: ChromiumOptions = ChromiumOptions(),
-        waitTimeout: TimeInterval = 30,
+        waitTimeout: TimeInterval = 120,
         clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         logger.debug("Converting \(markdown.lazy.count) files to PDF")
@@ -283,7 +283,7 @@ extension GotenbergClient {
         files: [String: Data],
         assets: [String: Data] = [:],
         options: ChromiumOptions = ChromiumOptions(),
-        waitTimeout: TimeInterval = 30,
+        waitTimeout: TimeInterval = 120,
         clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         guard !files.isEmpty else {
@@ -339,7 +339,7 @@ extension GotenbergClient {
     public func convertAndMerge(
         urls: [URL],
         options: ChromiumOptions = ChromiumOptions(),
-        waitTimeout: TimeInterval = 60,
+        waitTimeout: TimeInterval = 120,
         clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         guard !urls.isEmpty else {

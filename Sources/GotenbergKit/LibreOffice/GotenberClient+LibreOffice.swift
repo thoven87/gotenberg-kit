@@ -24,7 +24,7 @@ extension GotenbergClient {
     public func convertWithLibreOffice(
         documents: [String: Data],
         options: LibreOfficeConversionOptions = LibreOfficeConversionOptions(),
-        waitTimeout: TimeInterval = 30,
+        waitTimeout: TimeInterval = 500,
         clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         guard !documents.isEmpty else {
@@ -73,7 +73,7 @@ extension GotenbergClient {
     public func convertWithLibreOffice(
         urls: [DownloadFrom],
         options: LibreOfficeConversionOptions = LibreOfficeConversionOptions(),
-        waitTimeout: TimeInterval = 5,
+        waitTimeout: TimeInterval = 500,
         clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
         guard !urls.isEmpty else {
