@@ -105,6 +105,8 @@ public struct ChromiumOptions: Sendable {
     public var pdfua: Bool
     /// PDF metadata
     public var metadata: Metadata?
+    /// Tags provide a logical structure that governs how the content of the PDF is presented through assistive technology
+    public var generateTaggedPdf: Bool
 
     private let logger = Logger(label: "com.gotenbergkit.chromiumoptions")
 
@@ -139,7 +141,8 @@ public struct ChromiumOptions: Sendable {
         splitUnify: Bool = false,
         pdfFormat: PDFFormat? = nil,
         pdfua: Bool = false,
-        metadata: Metadata? = nil
+        metadata: Metadata? = nil,
+        generateTaggedPdf: Bool = false
     ) {
         self.singlePage = singlePage
         self.paperWidth = paperWidth
@@ -172,6 +175,7 @@ public struct ChromiumOptions: Sendable {
         self.pdfFormat = pdfFormat
         self.pdfua = pdfua
         self.metadata = metadata
+        self.generateTaggedPdf = generateTaggedPdf
     }
 
     var formValues: [String: String] {
@@ -193,6 +197,7 @@ public struct ChromiumOptions: Sendable {
         values["emulatedMediaType"] = emulatedMediaType.rawValue
         values["pdfua"] = String(pdfua)
         values["splitUnify"] = String(splitUnify)
+        values["generateTaggedPdf"] = String(generateTaggedPdf)
 
         values["failOnHttpStatusCodes"] = "[\(failOnHttpStatusCodes.map(String.init).joined(separator: ","))]"
         values["failOnConsoleExceptions"] = String(failOnConsoleExceptions)
