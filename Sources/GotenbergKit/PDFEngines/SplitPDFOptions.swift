@@ -72,14 +72,10 @@ public struct SplitPDFOptions: Sendable {
         if let metadata = metadata {
             do {
                 let encoder = JSONEncoder()
-
                 encoder.dateEncodingStrategy = .formatted(Metadata.dateFormatter())
 
                 let data = try encoder.encode(metadata)
-
-                if let stringValue = String(data: data, encoding: .utf8) {
-                    values["metadata"] = stringValue
-                }
+                values["metadata"] = String(decoding: data, as: UTF8.self)
             } catch {
                 logger.error(
                     "Error serializing metadata",

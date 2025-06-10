@@ -235,9 +235,7 @@ public struct ChromiumOptions: Sendable {
         if let extraHttpHeaders = extraHttpHeaders, !extraHttpHeaders.isEmpty {
             do {
                 let headersData = try JSONEncoder().encode(extraHttpHeaders)
-                if let headersString = String(data: headersData, encoding: .utf8) {
-                    values["extraHttpHeaders"] = headersString
-                }
+                values["extraHttpHeaders"] = String(decoding: headersData, as: UTF8.self)
             } catch {
                 logger.error(
                     "Failed to serialize extra HTTP headers",
@@ -252,35 +250,27 @@ public struct ChromiumOptions: Sendable {
             values["pdfa"] = pdfFormat.rawValue
         }
 
-        if let cookies = cookies {
-            if !cookies.isEmpty {
-                do {
-                    let cookies = try JSONEncoder().encode(cookies)
-                    if let cookies = String(data: cookies, encoding: .utf8) {
-                        values["cookies"] = cookies
-                    }
-                } catch {
-                    logger.error(
-                        "Failed to serialize extra Cookies",
-                        metadata: [
-                            "error": .string(error.localizedDescription)
-                        ]
-                    )
-                }
+        if let cookies = cookies, !cookies.isEmpty {
+            do {
+                let cookies = try JSONEncoder().encode(cookies)
+                values["cookies"] = String(decoding: cookies, as: UTF8.self)
+            } catch {
+                logger.error(
+                    "Failed to serialize extra Cookies",
+                    metadata: [
+                        "error": .string(error.localizedDescription)
+                    ]
+                )
             }
         }
 
         if let metadata = metadata {
             do {
-
                 let encoder = JSONEncoder()
-
                 encoder.dateEncodingStrategy = .formatted(Metadata.dateFormatter())
 
                 let data = try encoder.encode(metadata)
-                if let metadataString = String(data: data, encoding: .utf8) {
-                    values["metadata"] = metadataString
-                }
+                values["metadata"] = String(decoding: data, as: UTF8.self)
             } catch {
                 logger.error(
                     "Failed to serialize metadata",

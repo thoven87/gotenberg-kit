@@ -47,15 +47,13 @@ extension GotenbergClient {
             logger.debug("Document size: \(data.count) bytes")
         }
 
-        var headers: [String: String] = clientHTTPHeaders
-        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
-
         // Send request to Gotenberg
         return try await sendFormRequest(
             route: "/forms/pdfengines/merge",
             files: files,
             values: options.formValues,
-            headers: headers
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
         )
     }
 
@@ -108,21 +106,19 @@ extension GotenbergClient {
 
         // Convert to JSON
         let jsonData = try JSONEncoder().encode(urls)
-        let jsonString = String(data: jsonData, encoding: .utf8)!
+        let jsonString = String(decoding: jsonData, as: UTF8.self)
 
         var values = options.formValues
         values["downloadFrom"] = jsonString
 
         logger.debug("downloadFrom JSON: \(jsonString)")
 
-        var headers: [String: String] = clientHTTPHeaders
-        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
-
         return try await sendFormRequest(
             route: "/forms/pdfengines/merge",
             files: [],
             values: values,
-            headers: headers
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
         )
     }
 
@@ -147,21 +143,19 @@ extension GotenbergClient {
 
         // Convert to JSON
         let jsonData = try JSONEncoder().encode(urls)
-        let jsonString = String(data: jsonData, encoding: .utf8)!
+        let jsonString = String(decoding: jsonData, as: UTF8.self)
 
         var values = options.formValues
         values["downloadFrom"] = jsonString
 
         logger.debug("downloadFrom JSON: \(jsonString)")
 
-        var headers: [String: String] = clientHTTPHeaders
-        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
-
         return try await sendFormRequest(
             route: "/forms/pdfengines/convert",
             files: [],
             values: values,
-            headers: headers
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
         )
     }
 
@@ -200,15 +194,13 @@ extension GotenbergClient {
             logger.debug("Document size: \(data.lazy.count) bytes")
         }
 
-        var headers: [String: String] = clientHTTPHeaders
-        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
-
         // Send request to Gotenberg
         return try await sendFormRequest(
             route: "/forms/pdfengines/convert",
             files: files,
             values: options.formValues,
-            headers: headers
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
         )
     }
 
@@ -232,7 +224,7 @@ extension GotenbergClient {
             throw GotenbergError.noPDFsProvided
         }
 
-        logger.debug("Splitting \(documents.lazy.count) files PDFs from paths")
+        logger.debug("Splitting \(documents.count) files PDFs from paths")
 
         if options.splitUnify && options.splitMode != .pages {
             throw GotenbergError.invalidInput(message: "Unify option can only be used with mode: pages")
@@ -251,18 +243,16 @@ extension GotenbergClient {
                 )
             )
             logger.debug("Splitting file \(filename) using PDF engines route")
-            logger.debug("Document size: \(data.lazy.count) bytes")
+            logger.debug("Document size: \(data.count) bytes")
         }
-
-        var headers: [String: String] = clientHTTPHeaders
-        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
 
         // Send request to Gotenberg
         return try await sendFormRequest(
             route: "/forms/pdfengines/split",
             files: files,
             values: options.formValues,
-            headers: headers
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
         )
     }
 
@@ -290,19 +280,17 @@ extension GotenbergClient {
 
         // Convert to JSON
         let jsonData = try JSONEncoder().encode(urls)
-        let jsonString = String(data: jsonData, encoding: .utf8)!
+        let jsonString = String(decoding: jsonData, as: UTF8.self)
 
         var values = options.formValues
         values["downloadFrom"] = jsonString
-
-        var headers: [String: String] = clientHTTPHeaders
-        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
 
         return try await sendFormRequest(
             route: "/forms/pdfengines/split",
             files: [],
             values: values,
-            headers: headers
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
         )
     }
 
@@ -336,18 +324,16 @@ extension GotenbergClient {
                 )
             )
             logger.debug("Flattening file \(filename) using PDF engines route")
-            logger.debug("Document size: \(data.lazy.count) bytes")
+            logger.debug("Document size: \(data.count) bytes")
         }
-
-        var headers: [String: String] = clientHTTPHeaders
-        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
 
         // Send request to Gotenberg
         return try await sendFormRequest(
             route: "/forms/pdfengines/flatten",
             files: files,
             values: [:],
-            headers: headers
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
         )
     }
 
@@ -370,20 +356,18 @@ extension GotenbergClient {
 
         // Convert to JSON
         let jsonData = try JSONEncoder().encode(urls)
-        let jsonString = String(data: jsonData, encoding: .utf8)!
+        let jsonString = String(decoding: jsonData, as: UTF8.self)
 
         let values = [
             "downloadFrom": jsonString
         ]
 
-        var headers: [String: String] = clientHTTPHeaders
-        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
-
         return try await sendFormRequest(
             route: "/forms/pdfengines/flatten",
             files: [],
             values: values,
-            headers: headers
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
         )
     }
 
@@ -404,7 +388,7 @@ extension GotenbergClient {
             throw GotenbergError.noPDFsProvided
         }
 
-        logger.debug("Writting metadata for \(documents.lazy.count) PDFs from paths")
+        logger.debug("Writting metadata for \(documents.count) PDFs from paths")
 
         // Create request with PDF files
         var files: [FormFile] = []
@@ -419,39 +403,22 @@ extension GotenbergClient {
                 )
             )
             logger.debug("Writting metadata for file \(filename) using PDF engines route")
-            logger.debug("Document size: \(data.lazy.count) bytes")
+            logger.debug("Document size: \(data.count) bytes")
         }
 
         var values: [String: String] = [:]
 
-        do {
-            let encoder = JSONEncoder()
-
-            encoder.dateEncodingStrategy = .formatted(Metadata.dateFormatter())
-
-            let data = try encoder.encode(metadata)
-            if let stringValue = String(data: data, encoding: .utf8) {
-                values["metadata"] = stringValue
-            }
-        } catch {
-            logger.error(
-                "Error serializing metadata",
-                metadata: [
-                    "error": .string(error.localizedDescription)
-                ]
-            )
-            throw GotenbergError.invalidInput(message: "Error serializing metadata")
+        if !metadata.isEmpty {
+            values["metadata"] = try Metadata.serializeAsJSON(metadata, logger: logger)
         }
-
-        var headers: [String: String] = clientHTTPHeaders
-        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
 
         // Send request to Gotenberg
         return try await sendFormRequest(
             route: "/forms/pdfengines/metadata/write",
             files: files,
             values: values,
-            headers: headers
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
         )
     }
 
@@ -476,39 +443,22 @@ extension GotenbergClient {
 
         // Convert to JSON
         let jsonData = try JSONEncoder().encode(urls)
-        let jsonString = String(data: jsonData, encoding: .utf8)!
+        let jsonString = String(decoding: jsonData, as: UTF8.self)
 
         var values = [
             "downloadFrom": jsonString
         ]
 
-        do {
-            let encoder = JSONEncoder()
-
-            encoder.dateEncodingStrategy = .formatted(Metadata.dateFormatter())
-
-            let data = try encoder.encode(metadata)
-            if let stringValue = String(data: data, encoding: .utf8) {
-                values["metadata"] = stringValue
-            }
-        } catch {
-            logger.error(
-                "Error serializing metadata",
-                metadata: [
-                    "error": .string(error.localizedDescription)
-                ]
-            )
-            throw GotenbergError.invalidInput(message: "Error serializing metadata")
+        if !metadata.isEmpty {
+            values["metadata"] = try Metadata.serializeAsJSON(metadata, logger: logger)
         }
-
-        var headers: [String: String] = clientHTTPHeaders
-        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
 
         return try await sendFormRequest(
             route: "/forms/pdfengines/metadata/write",
             files: [],
             values: values,
-            headers: headers
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
         )
     }
 
@@ -527,16 +477,14 @@ extension GotenbergClient {
             throw GotenbergError.noURLsProvided
         }
 
-        logger.debug("Reading metadata for \(urls.lazy.count) PDFs from paths")
-
-        var headers: [String: String] = clientHTTPHeaders
-        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
+        logger.debug("Reading metadata for \(urls.count) PDFs from paths")
 
         return try await sendFormRequest(
             route: "/forms/pdfengines/metadata/read",
             files: [],
             values: [:],
-            headers: headers
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
         )
     }
 
@@ -570,18 +518,16 @@ extension GotenbergClient {
                 )
             )
             logger.debug("Reading metadata for file \(filename) using PDF engines route")
-            logger.debug("Document size: \(data.lazy.count) bytes")
+            logger.debug("Document size: \(data.count) bytes")
         }
-
-        var headers: [String: String] = clientHTTPHeaders
-        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
 
         // Send request to Gotenberg
         return try await sendFormRequest(
             route: "/forms/pdfengines/metadata/read",
             files: files,
             values: [:],
-            headers: headers
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
         )
     }
 }

@@ -52,7 +52,7 @@ struct ConvertWithLibreOfficeTests {
     @Test
     func convertOpenDocumentToPDF() async throws {
         logger.info("Converting Open Document to PDF")
-        let resourceURL = Bundle.module.url(forResource: "sample", withExtension: "odt", subdirectory: "Resources/documents")!
+        let resourceURL = try #require(Bundle.module.url(forResource: "sample", withExtension: "odt", subdirectory: "Resources/documents"))
 
         let document = try Data(contentsOf: resourceURL)
 
@@ -73,9 +73,9 @@ struct ConvertWithLibreOfficeTests {
     func convertAndMergeDocuments() async throws {
         logger.info("Converting and merging multiple documents")
 
-        let odt = Bundle.module.url(forResource: "sample", withExtension: "odt", subdirectory: "Resources/documents")!
+        let odt = try #require(Bundle.module.url(forResource: "sample", withExtension: "odt", subdirectory: "Resources/documents"))
 
-        let pdf = Bundle.module.url(forResource: "simple", withExtension: "pdf", subdirectory: "Resources/documents")!
+        let pdf = try #require(Bundle.module.url(forResource: "simple", withExtension: "pdf", subdirectory: "Resources/documents"))
 
         let csv = Bundle.module.url(
             forResource: "MTA_Subway_Major_Incidents__Beginning_2020",
