@@ -118,7 +118,7 @@ extension GotenbergClient {
         waitTimeout: TimeInterval = 120,
         clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
-        return try await capture(
+        try await capture(
             html: Data(html.utf8),
             assets: assets,
             options: options,

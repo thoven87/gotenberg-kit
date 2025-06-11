@@ -125,7 +125,10 @@ struct GokenbergKitTests {
         let pdfWithAssets = try await client.convert(
             html: htmlData,
             header: Data("<div style='text-align: center; font-size: 10px;'>Generated with Gotenberg</div>".utf8),
-            footer: Data("<div style='text-align: center; font-size: 10px;'>Page <span class='pageNumber'></span> of <span class='totalPages'></span></div>".utf8),
+            footer: Data(
+                "<div style='text-align: center; font-size: 10px;'>Page <span class='pageNumber'></span> of <span class='totalPages'></span></div>"
+                    .utf8
+            ),
             assets: assets,
             options: ChromiumOptions(
                 paperWidth: 8.5,

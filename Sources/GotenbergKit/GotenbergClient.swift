@@ -4,8 +4,8 @@
 import AsyncHTTPClient
 import Logging
 import NIO
-import NIOHTTP1
 import NIOFoundationCompat
+import NIOHTTP1
 
 import struct Foundation.Data
 import struct Foundation.TimeInterval
@@ -200,7 +200,7 @@ public struct GotenbergClient: Sendable {
         switch response.status {
         case .ok, .noContent:
             return response
-        case .gatewayTimeout, .tooManyRequests, .serviceUnavailable, .requestTimeout, .internalServerError: // Retry-able status
+        case .gatewayTimeout, .tooManyRequests, .serviceUnavailable, .requestTimeout, .internalServerError:  // Retry-able status
             let retryCount = currentRetryCount + 1
             if retryCount < maxRetries {
                 let delayTime = min(exp2(Double(retryCount)), 30)
@@ -212,8 +212,8 @@ public struct GotenbergClient: Sendable {
             }
 
             throw GotenbergError.apiError(statusCode: response.status.code, message: "Exhausted retry attempts")
-        default: // Any non-success, non-retryable status
-            let errorData = try await response.body.collect(upTo: 1024 * 1024 * 8) // 8 MB of error response gotta be enough...
+        default:  // Any non-success, non-retryable status
+            let errorData = try await response.body.collect(upTo: 1024 * 1024 * 8)  // 8 MB of error response gotta be enough...
             let errorMessage = String(buffer: errorData)
             logger.error(
                 "Gotenberg API error with status",
