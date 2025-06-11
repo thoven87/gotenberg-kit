@@ -136,10 +136,8 @@ public struct ScreenshotOptions: Sendable {
             values["failOnResourceHttpStatusCodes"] = "[\(failOnResourceHttpStatusCodes.map(String.init).joined(separator: ","))]"
         }
 
-        if let quality = quality {
-            if format == .jpeg {
-                values["quality"] = "\(quality)"
-            }
+        if let quality = quality, format == .jpeg {
+            values["quality"] = "\(quality)"
         }
 
         if let waitDelay = waitDelay {
@@ -157,9 +155,7 @@ public struct ScreenshotOptions: Sendable {
         if let extraHttpHeaders = extraHttpHeaders, !extraHttpHeaders.isEmpty {
             do {
                 let headersData = try JSONEncoder().encode(extraHttpHeaders)
-                if let headersString = String(data: headersData, encoding: .utf8) {
-                    values["extraHttpHeaders"] = headersString
-                }
+                values["extraHttpHeaders"] = String(decoding: headersData, as: UTF8.self)
             } catch {
                 logger.error(
                     "Failed to serialize extra HTTP headers",
@@ -173,9 +169,7 @@ public struct ScreenshotOptions: Sendable {
         if let cookies = cookies {
             do {
                 let cookies = try JSONEncoder().encode(cookies)
-                if let headersString = String(data: cookies, encoding: .utf8) {
-                    values["cookies"] = headersString
-                }
+                values["cookies"] = String(decoding: cookies, as: UTF8.self)
             } catch {
                 logger.error(
                     "Failed to serialize cookies",

@@ -5,6 +5,7 @@ import AsyncHTTPClient
 import Logging
 import NIO
 import NIOFoundationCompat
+import NIOHTTP1
 
 import struct Foundation.Data
 import struct Foundation.TimeInterval
@@ -87,14 +88,16 @@ public struct GotenbergClient: Sendable {
     ///   - files: Array of files to include in the request
     ///   - values: Dictionary of form values to include
     ///   - headers: Additional HTTP headers to include
+    ///   - timeoutSeconds: The number of seconds before the request times out
     /// - Returns: GotenbergResponse
     internal func sendFormRequest(
         route: String,
         files: [FormFile],
         values: [String: String],
         headers: [String: String],
+        timeoutSeconds: Int64
     ) async throws -> GotenbergResponse {
-        try await makeRequest(route: route, files: files, values: values, headers: headers)
+        try await sendPOSTRequest(route: route, files: files, values: values, headers: headers, timeoutSeconds: timeoutSeconds)
     }
 
     /// Sends a form request to Gotenberg with files and values
@@ -103,14 +106,14 @@ public struct GotenbergClient: Sendable {
     ///   - files: Array of files to include in the request
     ///   - values: Dictionary of form values to include
     ///   - headers: Additional HTTP headers to include
-    ///   - currentRetryCount: Current retry count
+    ///   - timeoutSeconds: The number of seconds before the request times out
     /// - Returns: GotenbergResponse
-    private func makeRequest(
+    private func sendPOSTRequest(
         route: String,
         files: [FormFile],
         values: [String: String],
         headers: [String: String],
-        currentRetryCount: Int = 0
+        timeoutSeconds: Int64
     ) async throws -> GotenbergResponse {
         // Create multipart form data
         let boundary = "------------------------\(UUID().uuidString)"
@@ -118,30 +121,46 @@ public struct GotenbergClient: Sendable {
 
         // Add form values
         for (name, value) in values {
-            body.append("--\(boundary)\r\n".data(using: .utf8)!)
-            body.append("Content-Disposition: form-data; name=\"\(name)\"\r\n\r\n".data(using: .utf8)!)
-            body.append("\(value)\r\n".data(using: .utf8)!)
+            body.append(contentsOf: "--\(boundary)\r\n".utf8)
+            body.append(contentsOf: "Content-Disposition: form-data; name=\"\(name)\"\r\n\r\n".utf8)
+            body.append(contentsOf: "\(value)\r\n".utf8)
         }
 
         // Add files
         for file in files {
-            body.append("--\(boundary)\r\n".data(using: .utf8)!)
-            body.append("Content-Disposition: form-data; name=\"\(file.name)\"; filename=\"\(file.filename)\"\r\n".data(using: .utf8)!)
-            body.append("Content-Type: \(file.contentType)\r\n\r\n".data(using: .utf8)!)
+            body.append(contentsOf: "--\(boundary)\r\n".utf8)
+            body.append(contentsOf: "Content-Disposition: form-data; name=\"\(file.name)\"; filename=\"\(file.filename)\"\r\n".utf8)
+            body.append(contentsOf: "Content-Type: \(file.contentType)\r\n\r\n".utf8)
             body.append(file.data)
-            body.append("\r\n".data(using: .utf8)!)
+            body.append(contentsOf: "\r\n".utf8)
         }
 
         // Add final boundary
-        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+        body.append(contentsOf: "--\(boundary)--\r\n".utf8)
 
+        // Create the request
+        var request = makeRequest(method: .POST, route: route, timeoutSeconds: timeoutSeconds, headers: headers)
+        request.headers.add(name: "Content-Type", value: "multipart/form-data; boundary=\(boundary)")
+        request.headers.add(name: "Content-Length", value: "\(body.count)")
+        request.body = .bytes(ByteBuffer(data: body))
+
+        return try await sendRequestWithRetry(request, timeoutSeconds: timeoutSeconds)
+    }
+
+    /// Creates a HTTP client request for sending to Gotenberg.
+    /// - Parameters:
+    ///   - method: The method to use
+    ///   - route: The API route to send the request to
+    ///   - timeoutSeconds: The number of seconds before the request times out
+    ///   - headers: Additional HTTP headers to include
+    /// - Returns: HTTPClientRequest
+    internal func makeRequest(method: HTTPMethod, route: String, timeoutSeconds: Int64, headers: [String: String]) -> HTTPClientRequest {
         // Create the request
         let endpoint = baseURL.appendingPathComponent(route)
         var request = HTTPClientRequest(url: endpoint.absoluteString)
-        request.method = .POST
-        request.headers.add(name: "Content-Type", value: "multipart/form-data; boundary=\(boundary)")
-        request.headers.add(name: "Content-Length", value: "\(body.count)")
+        request.method = method
         request.headers.add(name: "User-Agent", value: userAgent)
+        request.headers.add(name: "Gotenberg-Wait-Timeout", value: String(timeoutSeconds))
 
         if let username = username, let password = password {
             logger.debug("Using basic auth for Gotenberg API")
@@ -158,20 +177,30 @@ public struct GotenbergClient: Sendable {
             request.headers.add(name: key, value: value)
         }
 
-        // Set the request body
-        request.body = .bytes(ByteBuffer(data: body))
+        return request
+    }
 
-        logger.debug("Sending request to Gotenberg: \(endpoint.absoluteString)")
+    /// Sends an HTTP client request to Gotenberg. The request will be retried depending on the response status code.
+    /// - Parameters:
+    ///   - request: The API route to send the request to
+    ///   - timeoutSeconds: The number of seconds before the request times out
+    ///   - currentRetryCount: Current retry count
+    /// - Returns: GotenbergResponse
+    internal func sendRequestWithRetry(
+        _ request: HTTPClientRequest,
+        timeoutSeconds: Int64,
+        currentRetryCount: Int = 0
+    ) async throws -> GotenbergResponse {
+        logger.debug("Sending request to Gotenberg: \(request.url)")
 
         // Execute the request
-        let timeout = Int64(headers["Gotenberg-Wait-Timeout"] ?? "60") ?? 60
-        let response = try await httpClient.execute(
-            request,
-            deadline: .now() + .seconds(timeout)
-        )
+        let response = try await httpClient.execute(request, deadline: .now() + .seconds(timeoutSeconds))
 
+        // Handle response based on status
         switch response.status {
-        case .gatewayTimeout, .tooManyRequests, .serviceUnavailable, .requestTimeout, .internalServerError:
+        case .ok, .noContent:
+            return response
+        case .gatewayTimeout, .tooManyRequests, .serviceUnavailable, .requestTimeout, .internalServerError:  // Retry-able status
             let retryCount = currentRetryCount + 1
             if retryCount < maxRetries {
                 let delayTime = min(exp2(Double(retryCount)), 30)
@@ -179,64 +208,32 @@ public struct GotenbergClient: Sendable {
                 let delay = delayTime * (1 + jitter)
                 logger.debug("Gotenberg API returned \(response.status), retrying in \(delay) seconds with attempt count... \(retryCount)")
                 try await Task.sleep(for: .seconds(delay))
-                return try await makeRequest(
-                    route: route,
-                    files: files,
-                    values: values,
-                    headers: headers,
-                    currentRetryCount: retryCount
-                )
+                return try await sendRequestWithRetry(request, timeoutSeconds: timeoutSeconds, currentRetryCount: retryCount)
             }
 
             throw GotenbergError.apiError(statusCode: response.status.code, message: "Exhausted retry attempts")
-        case .ok:
-            return response
-        default: break
+        default:  // Any non-success, non-retryable status
+            let errorData = try await response.body.collect(upTo: 1024 * 1024 * 8)  // 8 MB of error response gotta be enough...
+            let errorMessage = String(buffer: errorData)
+            logger.error(
+                "Gotenberg API error with status",
+                metadata: [
+                    "statusCode": "\(response.status.code)",
+                    "message": .string(errorMessage),
+                ]
+            )
+            throw GotenbergError.apiError(statusCode: response.status.code, message: errorMessage)
         }
-
-        // Validate the response status
-        guard response.status == .ok else {
-            var errorData = Data()
-            for try await buffer in response.body {
-                errorData.append(Data(buffer.readableBytesView))
-            }
-
-            if let errorMessage = String(data: errorData, encoding: .utf8) {
-                logger.error(
-                    "Gotenberg API error with status",
-                    metadata: [
-                        "statusCode": "\(response.status.code)",
-                        "message": .string(errorMessage),
-                    ]
-                )
-                throw GotenbergError.apiError(statusCode: response.status.code, message: errorMessage)
-            } else {
-                logger.error(
-                    "Gotenberg API error",
-                    metadata: [
-                        "statusCode": "\(response.status.code)",
-                        "message": "Unknown error",
-                    ]
-                )
-                throw GotenbergError.apiError(statusCode: response.status.code, message: "Unknown error")
-            }
-        }
-
-        return response
     }
 
-    /// Conver an HTTPClientResponse into data
+    /// Convert an HTTPClientResponse into data
     /// - Parameters:
     ///   - response: The API response
     /// - Returns: Response data
     internal func toData(_ response: GotenbergResponse) async throws -> Data {
         // Collect response data
         logger.debug("Collecting response data from Gotenberg")
-        var responseData = Data()
-        for try await buffer in response.body {
-            responseData.append(Data(buffer.readableBytesView))
-        }
-
+        let responseData = try await Data(response.body.collect(upTo: .max).readableBytesView)
         logger.debug("Gotenberg request completed successfully, received \(responseData.count) bytes")
         return responseData
     }
@@ -244,6 +241,8 @@ public struct GotenbergClient: Sendable {
     /// Write a Gotenberg Response to a path
     /// - Parameters:
     ///   - response: The API response
+    ///   - path: The path to which the file should be written to
+    ///   - options: The writing options to use
     public func writeToFile(_ response: GotenbergResponse, at path: String, options: Data.WritingOptions = []) async throws {
         try await toData(response).write(
             to: URL(fileURLWithPath: path),

@@ -44,10 +44,10 @@ struct PDFEnginesTests {
 
     //    @Test
     //    func mergePDFsFromURL() async throws {
-    //        let pdfURLs: [URL] = [
+    //        let pdfURLs: [URL] = try [
     //            "\(serverURL)/documents/page_1.pdf",
     //            "\(serverURL)/documents/page_2.pdf",
-    //        ].map { URL(string: $0)! }
+    //        ].map { try #require(URL(string: $0)) }
     //
     //        logger.info("Starting to merge \(pdfURLs.count) PDFs")
     //
@@ -72,9 +72,9 @@ struct PDFEnginesTests {
 
     @Test
     func mergePDFsFromPath() async throws {
-        let pdf1 = Bundle.module.url(forResource: "page_1", withExtension: "pdf", subdirectory: "Resources/documents")!
+        let pdf1 = try #require(Bundle.module.url(forResource: "page_1", withExtension: "pdf", subdirectory: "Resources/documents"))
 
-        let pdf2 = Bundle.module.url(forResource: "page_2", withExtension: "pdf", subdirectory: "Resources/documents")!
+        let pdf2 = try #require(Bundle.module.url(forResource: "page_2", withExtension: "pdf", subdirectory: "Resources/documents"))
 
         let document1 = try Data(contentsOf: pdf1)
         let document2 = try Data(contentsOf: pdf2)
@@ -106,9 +106,9 @@ struct PDFEnginesTests {
 
     @Test
     func convertWithPDFEngines() async throws {
-        let doc1 = Bundle.module.url(forResource: "page_1", withExtension: "pdf", subdirectory: "Resources/documents")!
+        let doc1 = try #require(Bundle.module.url(forResource: "page_1", withExtension: "pdf", subdirectory: "Resources/documents"))
 
-        let doc2 = Bundle.module.url(forResource: "page_2", withExtension: "pdf", subdirectory: "Resources/documents")!
+        let doc2 = try #require(Bundle.module.url(forResource: "page_2", withExtension: "pdf", subdirectory: "Resources/documents"))
 
         let document1 = try Data(contentsOf: doc1)
         let document2 = try Data(contentsOf: doc2)
@@ -145,7 +145,7 @@ struct PDFEnginesTests {
 
     @Test
     func splitPDFs() async throws {
-        let document = Bundle.module.url(forResource: "pages_3", withExtension: "pdf", subdirectory: "Resources/documents")!
+        let document = try #require(Bundle.module.url(forResource: "pages_3", withExtension: "pdf", subdirectory: "Resources/documents"))
 
         logger.info("Starting to split file to mutiple PDFs")
 
@@ -172,9 +172,9 @@ struct PDFEnginesTests {
 
     @Test
     func flattenPDFs() async throws {
-        let document = Bundle.module.url(forResource: "pages_3", withExtension: "pdf", subdirectory: "Resources/documents")!
+        let document = try #require(Bundle.module.url(forResource: "pages_3", withExtension: "pdf", subdirectory: "Resources/documents"))
 
-        let document1 = Bundle.module.url(forResource: "page_1", withExtension: "pdf", subdirectory: "Resources/documents")!
+        let document1 = try #require(Bundle.module.url(forResource: "page_1", withExtension: "pdf", subdirectory: "Resources/documents"))
 
         logger.info("Starting to flatten files")
 
@@ -202,9 +202,9 @@ struct PDFEnginesTests {
 
     @Test
     func writePDFsMetadata() async throws {
-        let document = Bundle.module.url(forResource: "pages_3", withExtension: "pdf", subdirectory: "Resources/documents")!
+        let document = try #require(Bundle.module.url(forResource: "pages_3", withExtension: "pdf", subdirectory: "Resources/documents"))
 
-        let document1 = Bundle.module.url(forResource: "page_1", withExtension: "pdf", subdirectory: "Resources/documents")!
+        let document1 = try #require(Bundle.module.url(forResource: "page_1", withExtension: "pdf", subdirectory: "Resources/documents"))
 
         logger.info("Starting to write metadata to files")
 
@@ -236,9 +236,9 @@ struct PDFEnginesTests {
 
     @Test
     func readPDFsMetadata() async throws {
-        let document = Bundle.module.url(forResource: "pages_3", withExtension: "pdf", subdirectory: "Resources/documents")!
+        let document = try #require(Bundle.module.url(forResource: "pages_3", withExtension: "pdf", subdirectory: "Resources/documents"))
 
-        let document1 = Bundle.module.url(forResource: "page_1", withExtension: "pdf", subdirectory: "Resources/documents")!
+        let document1 = try #require(Bundle.module.url(forResource: "page_1", withExtension: "pdf", subdirectory: "Resources/documents"))
 
         logger.info("Starting to write metadata to files")
 

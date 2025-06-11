@@ -50,7 +50,7 @@ struct GokenbergKitTests {
             """
 
         let result = try await client.convert(
-            html: htmlContent.data(using: .utf8)!
+            html: Data(htmlContent.utf8)
         )
         #expect(result.status.code == 200)
         try await client.writeToFile(result, at: "\(baseOutputPath)/simple.pdf")
@@ -111,28 +111,24 @@ struct GokenbergKitTests {
             """
 
         // Load image data from a file
-        let logoData = try await HTTPClient.shared.get(url: "https://logolab.app/assets/logo.png").get()
-
-        guard let logoData = logoData.body else {
-            #expect(Bool(false))
-            return
-        }
+        let logoData = try await #require(HTTPClient.shared.get(url: "https://logolab.app/assets/logo.png").get().body)
 
         // Prepare assets
         let assets: [String: Data] = [
-            "styles.css": cssContent.data(using: .utf8)!,
-            "script.js": jsContent.data(using: .utf8)!,
+            "styles.css": Data(cssContent.utf8),
+            "script.js": Data(jsContent.utf8),
             "logo.png": Data(buffer: logoData),
         ]
 
-        let htmlData = htmlWithAssets.data(using: .utf8)!
+        let htmlData = Data(htmlWithAssets.utf8)
 
         let pdfWithAssets = try await client.convert(
             html: htmlData,
-            header: "<div style='text-align: center; font-size: 10px;'>Generated with Gotenberg</div>".data(using: .utf8)!,
-            footer:
+            header: Data("<div style='text-align: center; font-size: 10px;'>Generated with Gotenberg</div>".utf8),
+            footer: Data(
                 "<div style='text-align: center; font-size: 10px;'>Page <span class='pageNumber'></span> of <span class='totalPages'></span></div>"
-                .data(using: .utf8)!,
+                    .utf8
+            ),
             assets: assets,
             options: ChromiumOptions(
                 paperWidth: 8.5,
@@ -153,7 +149,7 @@ struct GokenbergKitTests {
     func urlToPDF() async throws {
 
         let pdfData = try await client.convert(
-            url: URL(string: "https://developer.apple.com/swift")!,
+            url: #require(URL(string: "https://developer.apple.com/swift")),
             options: ChromiumOptions(
                 paperWidth: 11.0,
                 paperHeight: 8.5,  // Landscape size
@@ -262,17 +258,17 @@ struct GokenbergKitTests {
             """
 
         // Load logo image
-        let url = Bundle.module.url(forResource: "test-logo", withExtension: "png", subdirectory: "Resources/images")!
+        let url = try #require(Bundle.module.url(forResource: "test-logo", withExtension: "png", subdirectory: "Resources/images"))
         let logoData = try Data(contentsOf: url)
 
         // Prepare files
         let markdownFiles = [
-            "index.html": htmlContent.data(using: .utf8)!,
-            "document.md": markdownContent.data(using: .utf8)!,
+            "index.html": Data(htmlContent.utf8),
+            "document.md": Data(markdownContent.utf8),
         ]
 
         let assets = [
-            "custom.css": customCSS.data(using: .utf8)!,
+            "custom.css": Data(customCSS.utf8),
             "logo.png": logoData,
         ]
 
@@ -296,11 +292,11 @@ struct GokenbergKitTests {
 
     @Test
     func batchProcessingURLToPDF() async throws {
-        let urls = [
+        let urls = try [
             "https://github.com",
             "https://developer.apple.com",
             "https://swift.org",
-        ].map { URL(string: $0)! }
+        ].map { try #require(URL(string: $0)) }
 
         typealias Response = [URL: GotenbergClient.GotenbergResponse]
 
@@ -333,11 +329,11 @@ struct GokenbergKitTests {
 
     @Test
     func batchProcessingURLToPNG() async throws {
-        let urls = [
+        let urls = try [
             "https://github.com",
             "https://developer.apple.com",
             "https://swift.org",
-        ].map { URL(string: $0)! }
+        ].map { try #require(URL(string: $0)) }
 
         let result = try await client.capture(
             urls: urls,
@@ -362,5 +358,24 @@ struct GokenbergKitTests {
 
         let contentType = "application/pdf"
         #expect(GotenbergClient.isFileSupported(contentType) == true)
+    }
+
+    @Test
+    func testVersion() async throws {
+        let version = try await client.version()
+        #expect(version.isEmpty == false)
+    }
+
+    @Test
+    func testHealth() async throws {
+        let health = try await client.health()
+        #expect(health.status == .up)
+        let details = try #require(health.details)
+        let chromium = try #require(details.chromium)
+        #expect(chromium.status == .up)
+        #expect(chromium.timestamp <= .now)
+        let libreOffice = try #require(details.libreOffice)
+        #expect(libreOffice.status == .up)
+        #expect(libreOffice.timestamp <= .now)
     }
 }

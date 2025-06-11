@@ -51,14 +51,12 @@ extension GotenbergClient {
 
         let values = options.formValues
 
-        var headers: [String: String] = clientHTTPHeaders
-        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
-
         return try await sendFormRequest(
             route: "/forms/libreoffice/convert",
             files: files,
             values: values,
-            headers: headers
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
         )
     }
 
@@ -84,19 +82,17 @@ extension GotenbergClient {
 
         // Convert to JSON
         let jsonData = try JSONEncoder().encode(urls)
-        let jsonString = String(data: jsonData, encoding: .utf8)!
+        let jsonString = String(decoding: jsonData, as: UTF8.self)
 
         var values = options.formValues
         values["downloadFrom"] = jsonString
-
-        var headers: [String: String] = clientHTTPHeaders
-        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
 
         return try await sendFormRequest(
             route: "/forms/libreoffice/convert",
             files: [],
             values: values,
-            headers: headers
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
         )
     }
 }

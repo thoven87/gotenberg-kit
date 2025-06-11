@@ -50,14 +50,12 @@ extension GotenbergClient {
             )
         }
 
-        var headers: [String: String] = clientHTTPHeaders
-        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
-
         return try await sendFormRequest(
             route: "/forms/chromium/screenshot/html",
             files: files,
             values: options.formValues,
-            headers: headers
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
         )
     }
 
@@ -96,14 +94,12 @@ extension GotenbergClient {
             ),
         ]
 
-        var headers: [String: String] = clientHTTPHeaders
-        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
-
         return try await sendFormRequest(
             route: "/forms/chromium/screenshot/markdown",
             files: files,
             values: options.formValues,
-            headers: headers
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
         )
     }
 
@@ -122,12 +118,8 @@ extension GotenbergClient {
         waitTimeout: TimeInterval = 120,
         clientHTTPHeaders: [String: String] = [:]
     ) async throws -> GotenbergResponse {
-        guard let htmlData = html.data(using: .utf8) else {
-            throw GotenbergError.invalidInput(message: "Failed to encode HTML string as UTF-8")
-        }
-
-        return try await capture(
-            html: htmlData,
+        try await capture(
+            html: Data(html.utf8),
             assets: assets,
             options: options,
             waitTimeout: waitTimeout,
@@ -155,14 +147,12 @@ extension GotenbergClient {
         var values = options.formValues
         values["url"] = url.absoluteString
 
-        var headers: [String: String] = clientHTTPHeaders
-        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
-
         return try await sendFormRequest(
             route: "/forms/chromium/screenshot/url",
             files: [],
             values: values,
-            headers: headers
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
         )
     }
 

@@ -77,14 +77,12 @@ extension GotenbergClient {
             )
         }
 
-        var headers: [String: String] = clientHTTPHeaders
-        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
-
         return try await sendFormRequest(
             route: "/forms/chromium/convert/html",
             files: files,
             values: options.formValues,
-            headers: headers
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
         )
     }
 
@@ -136,14 +134,12 @@ extension GotenbergClient {
             )
         }
 
-        var headers: [String: String] = clientHTTPHeaders
-        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
-
         return try await sendFormRequest(
             route: "/forms/chromium/convert/url",
             files: files,
             values: values,
-            headers: headers
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
         )
     }
 
@@ -168,7 +164,7 @@ extension GotenbergClient {
 
         // Convert to JSON
         let jsonData = try JSONEncoder().encode(html)
-        let jsonString = String(data: jsonData, encoding: .utf8)!
+        let jsonString = String(decoding: jsonData, as: UTF8.self)
 
         var values = options.formValues
         values["downloadFrom"] = jsonString
@@ -197,14 +193,12 @@ extension GotenbergClient {
             )
         }
 
-        var headers: [String: String] = clientHTTPHeaders
-        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
-
         return try await sendFormRequest(
             route: "/forms/chromium/convert/html",
             files: files,
             values: values,
-            headers: headers
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
         )
     }
 
@@ -229,7 +223,7 @@ extension GotenbergClient {
 
         // Convert to JSON
         let jsonData = try JSONEncoder().encode(markdown)
-        let jsonString = String(data: jsonData, encoding: .utf8)!
+        let jsonString = String(decoding: jsonData, as: UTF8.self)
 
         var values = options.formValues
         values["downloadFrom"] = jsonString
@@ -258,14 +252,12 @@ extension GotenbergClient {
             )
         }
 
-        var headers: [String: String] = clientHTTPHeaders
-        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
-
         return try await sendFormRequest(
             route: "/forms/chromium/convert/markdown",
             files: files,
             values: values,
-            headers: headers
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
         )
     }
 
@@ -318,14 +310,12 @@ extension GotenbergClient {
             )
         }
 
-        var headers: [String: String] = clientHTTPHeaders
-        headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
-
         return try await sendFormRequest(
             route: "/forms/chromium/convert/markdown",
             files: formFiles,
             values: options.formValues,
-            headers: headers
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
         )
     }
 
@@ -349,18 +339,14 @@ extension GotenbergClient {
         logger.debug("Converting and merging \(urls.count) URLs")
 
         // Convert each URL to PDF
-        let pdfData = try await withThrowingTaskGroup(of: (String, Data).self) { group -> [String: Data] in
+        let pdfData = try await withThrowingTaskGroup(of: (filename: String, data: Data).self) { group -> [String: Data] in
             for (index, url) in urls.enumerated() {
-
-                var headers: [String: String] = clientHTTPHeaders
-                headers["Gotenberg-Wait-Timeout"] = "\(Int(waitTimeout))"
-
                 group.addTask {
                     let pdfData = try await convert(
                         url: url,
                         options: options,
                         waitTimeout: waitTimeout,
-                        clientHTTPHeaders: headers
+                        clientHTTPHeaders: clientHTTPHeaders
                     )
                     let host = url.host ?? "unknown"
                     let path = url.path.isEmpty ? "page_\(index)" : url.path
@@ -369,12 +355,9 @@ extension GotenbergClient {
                 }
             }
 
-            var results: [String: Data] = [:]
-            while let (filename, data) = try await group.next() {
-                results[filename] = data
+            return try await group.reduce(into: [:]) { partialResult, response in
+                partialResult[response.filename] = response.data
             }
-
-            return results
         }
 
         // Now merge the PDFs

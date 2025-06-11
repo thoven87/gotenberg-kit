@@ -4,8 +4,12 @@
 //
 //  Created by Stevenson Michel on 4/11/25.
 //
+
+import Logging
+
 import struct Foundation.Date
 import class Foundation.DateFormatter
+import class Foundation.JSONEncoder
 import struct Foundation.Locale
 import struct Foundation.TimeZone
 
@@ -93,5 +97,23 @@ public struct Metadata: Codable, Sendable {
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.timeZone = TimeZone(secondsFromGMT: 0)
         return formatter
+    }
+
+    package static func serializeAsJSON(_ metadata: [String: String], logger: Logger) throws -> String {
+        do {
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .formatted(dateFormatter())
+
+            let data = try encoder.encode(metadata)
+            return String(decoding: data, as: UTF8.self)
+        } catch {
+            logger.error(
+                "Error serializing metadata",
+                metadata: [
+                    "error": .string(error.localizedDescription)
+                ]
+            )
+            throw GotenbergError.invalidInput(message: "Error serializing metadata")
+        }
     }
 }
