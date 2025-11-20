@@ -2,9 +2,10 @@
 //  LibreOfficeConversionOptions.swift
 //  gotenberg-kit
 //
-//  Created by Stevenson Michel on 4/11/25.
+//  Created by Stevenson Michel on 4/14/25.
 //
 
+import Foundation
 import Logging
 
 import class Foundation.JSONEncoder
@@ -98,6 +99,8 @@ public struct LibreOfficeConversionOptions {
     public var userPassword: String?
     /// Password for full access on the resulting PDF
     public var ownerPassword: String?
+    /// Files to embed in the generated PDF (for ZUGFeRD/Factur-X compliance)
+    public var embeds: [String: Data]
 
     public struct PageRange {
         public let from: Int
@@ -151,7 +154,8 @@ public struct LibreOfficeConversionOptions {
         metadata: Metadata? = nil,
         flatten: Bool = false,
         userPassword: String? = nil,
-        ownerPassword: String? = nil
+        ownerPassword: String? = nil,
+        embeds: [String: Data] = [:]
     ) {
         self.password = password
         self.landscape = landscape
@@ -185,6 +189,7 @@ public struct LibreOfficeConversionOptions {
         self.flatten = flatten
         self.userPassword = userPassword
         self.ownerPassword = ownerPassword
+        self.embeds = embeds
     }
 
     /// Convert options to form values for the API request

@@ -5,6 +5,7 @@
 //  Created by Stevenson Michel on 4/14/25.
 //
 
+import Foundation
 import Logging
 
 import class Foundation.JSONEncoder
@@ -22,6 +23,8 @@ public struct PDFEngineOptions: Sendable {
     public var userPassword: String?
     /// Password for full access on the resulting PDF
     public var ownerPassword: String?
+    /// Files to embed in the generated PDF (for ZUGFeRD/Factur-X compliance)
+    public var embeds: [String: Data]
 
     private let logger = Logger(label: "PDFEngineOptions")
 
@@ -31,7 +34,8 @@ public struct PDFEngineOptions: Sendable {
         pdfa: Bool = false,
         format: PDFFormat? = nil,
         userPassword: String? = nil,
-        ownerPassword: String? = nil
+        ownerPassword: String? = nil,
+        embeds: [String: Data] = [:]
     ) {
         self.metadata = metadata
         self.flatten = flatten
@@ -39,6 +43,7 @@ public struct PDFEngineOptions: Sendable {
         self.format = format
         self.userPassword = userPassword
         self.ownerPassword = ownerPassword
+        self.embeds = embeds
     }
 
     var formValues: [String: String] {

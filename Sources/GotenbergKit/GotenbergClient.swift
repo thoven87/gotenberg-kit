@@ -309,6 +309,21 @@ public struct GotenbergClient: Sendable {
             )
             throw GotenbergError.apiError(statusCode: response.status.code, message: errorMessage)
         }
+
+    }
+
+    /// Helper function to process embed files into FormFile array
+    /// - Parameter embeds: Dictionary of filename to file data for embedding
+    /// - Returns: Array of FormFile objects for embed files
+    internal func processEmbedFiles(_ embeds: [String: Data]) -> [FormFile] {
+        embeds.map { filename, data in
+            FormFile(
+                name: "embeds",
+                filename: filename,
+                contentType: contentTypeForFilename(filename),
+                data: data
+            )
+        }
     }
 
     /// Convert an HTTPClientResponse into data

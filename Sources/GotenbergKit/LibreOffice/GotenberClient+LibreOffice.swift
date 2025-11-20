@@ -49,6 +49,10 @@ extension GotenbergClient {
             logger.debug("Document size: \(data.count) bytes")
         }
 
+        // Add embed files
+        let embedFiles = processEmbedFiles(options.embeds)
+        files.append(contentsOf: embedFiles)
+
         let values = options.formValues
 
         return try await sendFormRequest(
@@ -87,9 +91,12 @@ extension GotenbergClient {
         var values = options.formValues
         values["downloadFrom"] = jsonString
 
+        // Add embed files
+        let embedFiles = processEmbedFiles(options.embeds)
+
         return try await sendFormRequest(
             route: "/forms/libreoffice/convert",
-            files: [],
+            files: embedFiles,
             values: values,
             headers: clientHTTPHeaders,
             timeoutSeconds: Int64(waitTimeout)

@@ -5,6 +5,7 @@
 //  Created by Stevenson Michel on 4/12/25.
 //
 
+import Foundation
 import Logging
 
 import class Foundation.JSONEncoder
@@ -111,6 +112,8 @@ public struct ChromiumOptions: Sendable {
     public var userPassword: String?
     /// Password for full access on the resulting PDF
     public var ownerPassword: String?
+    /// Files to embed in the generated PDF (for ZUGFeRD/Factur-X compliance)
+    public var embeds: [String: Data]
 
     private let logger = Logger(label: "com.gotenbergkit.chromiumoptions")
 
@@ -148,7 +151,8 @@ public struct ChromiumOptions: Sendable {
         metadata: Metadata? = nil,
         generateTaggedPdf: Bool = false,
         userPassword: String? = nil,
-        ownerPassword: String? = nil
+        ownerPassword: String? = nil,
+        embeds: [String: Data] = [:]
     ) {
         self.singlePage = singlePage
         self.paperWidth = paperWidth
@@ -184,6 +188,7 @@ public struct ChromiumOptions: Sendable {
         self.generateTaggedPdf = generateTaggedPdf
         self.userPassword = userPassword
         self.ownerPassword = ownerPassword
+        self.embeds = embeds
     }
 
     var formValues: [String: String] {
