@@ -305,7 +305,159 @@ let encryptedFromURLs = try await client.encryptPDFs(
 - **User Password**: Required to open and view the PDF (required for encryption)
 - **Owner Password**: Required for full access (editing, copying, printing) (optional)
 
+### PDF File Embedding
 
+GotenbergKit supports embedding files within PDFs in two ways:
+
+1. **During Conversion**: Embed files while generating PDFs from HTML, Markdown, or office documents
+2. **Post-Processing**: Use the dedicated embed route to add files to existing PDFs
+
+This enables compliance with standards like ZUGFeRD/Factur-X that require XML invoices and other attachments to be embedded in the PDF.
+
+#### 1. Embed Files During Conversion
+
+```swift
+// Create invoice XML for ZUGFeRD/Factur-X compliance
+let invoiceXML = """
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice xmlns="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100">
+    <ExchangedDocument>
+        <ID>INV-12345</ID>
+        <TypeCode>380</TypeCode>
+    </ExchangedDocument>
+</Invoice>
+""".data(using: .utf8)!
+
+let metadataJSON = """
+{
+    "invoice_number": "INV-12345",
+    "amount": 1000.00,
+    "currency": "USD"
+}
+""".data(using: .utf8)!
+
+// Embed files during HTML to PDF conversion
+let options = ChromiumOptions(
+    embeds: [
+        "invoice.xml": invoiceXML,
+        "metadata.json": metadataJSON,
+        "logo.png": try Data(contentsOf: logoURL)
+    ]
+)
+
+let response = try await client.convert(
+    html: htmlContent.data(using: .utf8)!,
+    options: options
+)
+
+// Embed files during LibreOffice conversion
+let libreOptions = LibreOfficeConversionOptions(
+    embeds: [
+        "factur-x.xml": facturXData,
+        "additional-info.pdf": additionalPdfData
+    ]
+)
+
+let response = try await client.convertWithLibreOffice(
+    documents: ["invoice.docx": docData],
+    options: libreOptions
+)
+```
+
+#### 2. Embed Files During PDF Processing
+
+```swift
+// Embed files when encrypting existing PDFs
+let pdfOptions = PDFEngineOptions(
+    userPassword: "password123",
+    embeds: [
+        "invoice.xml": invoiceXMLData,
+        "receipt.pdf": receiptPdfData
+    ]
+)
+
+let encryptedResponse = try await client.encryptPDFs(
+    documents: ["document.pdf": pdfData],
+    options: pdfOptions
+)
+
+// Embed files when merging PDFs
+let mergeOptions = PDFEngineOptions(
+    embeds: [
+        "source-data.xml": xmlData,
+        "attachments.zip": zipData
+    ]
+)
+
+let mergedResponse = try await client.mergeWithPDFEngines(
+    documents: ["doc1.pdf": pdf1Data, "doc2.pdf": pdf2Data],
+    options: mergeOptions
+)
+```
+
+#### 3. Dedicated Embed Route
+
+For adding files to existing PDFs, use the dedicated `embedFiles` method that utilizes Gotenberg's `/forms/pdfengines/embed` route:
+
+```swift
+// Create files to embed
+let invoiceXML = """
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice xmlns="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100">
+    <ExchangedDocument>
+        <ID>INV-2025-001</ID>
+        <TypeCode>380</TypeCode>
+    </ExchangedDocument>
+</Invoice>
+""".data(using: .utf8)!
+
+let metadataJSON = """
+{
+    "invoice_id": "INV-2025-001",
+    "amount": 1500.00,
+    "currency": "USD"
+}
+""".data(using: .utf8)!
+
+// Embed files into existing PDFs
+let embedOptions = PDFEngineOptions(
+    metadata: Metadata(
+        author: "Invoice System",
+        title: "Invoice with Embedded Data",
+        subject: "ZUGFeRD Compliant Invoice"
+    ),
+    embeds: [
+        "factur-x.xml": invoiceXML,
+        "invoice-metadata.json": metadataJSON
+    ]
+)
+
+let embeddedResponse = try await client.embedFiles(
+    documents: ["invoice.pdf": existingPdfData],
+    options: embedOptions
+)
+
+// Embed files from URLs
+let embeddedFromUrls = try await client.embedFiles(
+    urls: [DownloadFrom(url: "https://example.com/document.pdf")],
+    options: embedOptions
+)
+```
+
+**Key Features:**
+- **Multiple Files**: Embed multiple files of different types (XML, JSON, PDF, images, etc.)
+- **Standards Compliance**: Perfect for ZUGFeRD/Factur-X invoice standards
+- **Two Approaches**: Embed during conversion or post-process existing PDFs
+- **Flexible Input**: Support for file data and URLs
+- **Metadata Control**: Override PDF metadata during embedding
+- **Preserved Attachments**: Embedded files can be extracted by PDF readers that support attachments
+
+**Use Cases:**
+- **Electronic Invoicing**: ZUGFeRD/Factur-X compliant invoices with embedded XML
+- **Legal Documents**: Contracts with embedded supporting documents  
+- **Document Archival**: Add source files to final PDFs
+- **Compliance**: Meet regulatory requirements for embedded attachments
+- **Post-Processing**: Add files to existing PDF workflows
 
 ### Authentication
 

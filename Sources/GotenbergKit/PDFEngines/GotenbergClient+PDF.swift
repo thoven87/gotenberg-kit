@@ -47,6 +47,10 @@ extension GotenbergClient {
             logger.debug("Document size: \(data.count) bytes")
         }
 
+        // Add embed files
+        let embedFiles = processEmbedFiles(options.embeds)
+        files.append(contentsOf: embedFiles)
+
         // Send request to Gotenberg
         return try await sendFormRequest(
             route: "/forms/pdfengines/merge",
@@ -113,9 +117,12 @@ extension GotenbergClient {
 
         logger.debug("downloadFrom JSON: \(jsonString)")
 
+        // Add embed files
+        let embedFiles = processEmbedFiles(options.embeds)
+
         return try await sendFormRequest(
             route: "/forms/pdfengines/merge",
-            files: [],
+            files: embedFiles,
             values: values,
             headers: clientHTTPHeaders,
             timeoutSeconds: Int64(waitTimeout)
@@ -150,9 +157,12 @@ extension GotenbergClient {
 
         logger.debug("downloadFrom JSON: \(jsonString)")
 
+        // Add embed files
+        let embedFiles = processEmbedFiles(options.embeds)
+
         return try await sendFormRequest(
             route: "/forms/pdfengines/convert",
-            files: [],
+            files: embedFiles,
             values: values,
             headers: clientHTTPHeaders,
             timeoutSeconds: Int64(waitTimeout)
@@ -193,6 +203,10 @@ extension GotenbergClient {
             logger.debug("Converting file \(filename) using PDF engines route")
             logger.debug("Document size: \(data.lazy.count) bytes")
         }
+
+        // Add embed files
+        let embedFiles = processEmbedFiles(options.embeds)
+        files.append(contentsOf: embedFiles)
 
         // Send request to Gotenberg
         return try await sendFormRequest(
@@ -569,6 +583,10 @@ extension GotenbergClient {
             logger.debug("Document size: \(data.count) bytes")
         }
 
+        // Add embed files
+        let embedFiles = processEmbedFiles(options.embeds)
+        files.append(contentsOf: embedFiles)
+
         // Create form values from options
         let values = options.formValues
 
@@ -619,10 +637,116 @@ extension GotenbergClient {
             logger.debug("Encrypting PDF from URL: \(downloadFrom.url)")
         }
 
+        // Add embed files
+        let embedFiles = processEmbedFiles(options.embeds)
+
         // Send request to Gotenberg encrypt route
         return try await sendFormRequest(
             route: "/forms/pdfengines/encrypt",
-            files: [],
+            files: embedFiles,
+            values: values,
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
+        )
+    }
+
+    /// Embed files into existing PDFs using the dedicated pdfengines/embed route
+    /// - Parameters:
+    ///   - documents: Dictionary of PDF file data to embed files into
+    ///   - options: PDFEngineOptions containing embed files and other options
+    ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
+    /// - Returns: GotenbergResponse containing the PDFs with embedded files
+    public func embedFiles(
+        documents: [String: Data],
+        options: PDFEngineOptions = PDFEngineOptions(),
+        waitTimeout: TimeInterval = 120,
+        clientHTTPHeaders: [String: String] = [:]
+    ) async throws -> GotenbergResponse {
+        guard !documents.isEmpty else {
+            throw GotenbergError.noPDFsProvided
+        }
+
+        guard !options.embeds.isEmpty else {
+            throw GotenbergError.invalidInput(message: "At least one embed file is required")
+        }
+
+        logger.debug("Embedding files into \(documents.count) PDF(s)")
+
+        // Create request with PDF files
+        var files: [FormFile] = []
+        for (filename, data) in documents {
+            files.append(
+                FormFile(
+                    name: "files",
+                    filename: filename,
+                    contentType: contentTypeForFilename(filename),
+                    data: data
+                )
+            )
+            logger.debug("Embedding files into \(filename)")
+            logger.debug("Document size: \(data.count) bytes")
+        }
+
+        // Add embed files
+        let embedFiles = processEmbedFiles(options.embeds)
+        files.append(contentsOf: embedFiles)
+
+        // Create form values from options (excluding embeds since they're handled as files)
+        let values = options.formValues
+
+        // Send request to Gotenberg embed route
+        return try await sendFormRequest(
+            route: "/forms/pdfengines/embed",
+            files: files,
+            values: values,
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
+        )
+    }
+
+    /// Embed files into PDFs from URLs using the dedicated pdfengines/embed route
+    /// - Parameters:
+    ///   - urls: Array of DownloadFrom objects containing PDF URLs
+    ///   - options: PDFEngineOptions containing embed files and other options
+    ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
+    /// - Returns: GotenbergResponse containing the PDFs with embedded files
+    public func embedFiles(
+        urls: [DownloadFrom],
+        options: PDFEngineOptions = PDFEngineOptions(),
+        waitTimeout: TimeInterval = 120,
+        clientHTTPHeaders: [String: String] = [:]
+    ) async throws -> GotenbergResponse {
+        guard !urls.isEmpty else {
+            throw GotenbergError.noPDFsProvided
+        }
+
+        guard !options.embeds.isEmpty else {
+            throw GotenbergError.invalidInput(message: "At least one embed file is required")
+        }
+
+        logger.debug("Embedding files into \(urls.count) PDF(s) from URLs")
+
+        // Convert URLs to JSON
+        let jsonData = try JSONEncoder().encode(urls)
+        let jsonString = String(decoding: jsonData, as: UTF8.self)
+
+        // Create form values from options and add URLs
+        var values = options.formValues
+        values["downloadFrom"] = jsonString
+
+        // Add embed files
+        let embedFiles = processEmbedFiles(options.embeds)
+
+        for downloadFrom in urls {
+            logger.debug("Embedding files into PDF from URL: \(downloadFrom.url)")
+        }
+
+        // Send request to Gotenberg embed route
+        return try await sendFormRequest(
+            route: "/forms/pdfengines/embed",
+            files: embedFiles,
             values: values,
             headers: clientHTTPHeaders,
             timeoutSeconds: Int64(waitTimeout)

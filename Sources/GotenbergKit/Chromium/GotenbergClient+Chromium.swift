@@ -77,6 +77,10 @@ extension GotenbergClient {
             )
         }
 
+        // Add embed files
+        let embedFiles = processEmbedFiles(options.embeds)
+        files.append(contentsOf: embedFiles)
+
         return try await sendFormRequest(
             route: "/forms/chromium/convert/html",
             files: files,
@@ -133,6 +137,10 @@ extension GotenbergClient {
                 )
             )
         }
+
+        // Add embed files
+        let embedFiles = processEmbedFiles(options.embeds)
+        files.append(contentsOf: embedFiles)
 
         return try await sendFormRequest(
             route: "/forms/chromium/convert/url",
@@ -193,6 +201,10 @@ extension GotenbergClient {
             )
         }
 
+        // Add embed files
+        let embedFiles = processEmbedFiles(options.embeds)
+        files.append(contentsOf: embedFiles)
+
         return try await sendFormRequest(
             route: "/forms/chromium/convert/html",
             files: files,
@@ -252,6 +264,10 @@ extension GotenbergClient {
             )
         }
 
+        // Add embed files
+        let embedFiles = processEmbedFiles(options.embeds)
+        files.append(contentsOf: embedFiles)
+
         return try await sendFormRequest(
             route: "/forms/chromium/convert/markdown",
             files: files,
@@ -309,6 +325,10 @@ extension GotenbergClient {
                 )
             )
         }
+
+        // Add embed files
+        let embedFiles = processEmbedFiles(options.embeds)
+        formFiles.append(contentsOf: embedFiles)
 
         return try await sendFormRequest(
             route: "/forms/chromium/convert/markdown",
