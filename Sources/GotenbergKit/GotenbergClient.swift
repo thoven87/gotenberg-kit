@@ -180,6 +180,52 @@ public struct GotenbergClient: Sendable {
         return request
     }
 
+    /// Determines if a server error should be retried based on status code and error message
+    /// - Parameters:
+    ///   - statusCode: The HTTP status code from the server
+    ///   - errorMessage: The error message from the server
+    /// - Returns: True if the error should be retried, false otherwise
+    internal func isRetryableServerError(status: HTTPResponseStatus, errorMessage: String) -> Bool {
+        // Never retry specific status codes that indicate client errors or conflicts
+        switch status {
+        case .badRequest, .unauthorized, .paymentRequired, .forbidden, .notFound, .methodNotAllowed,
+            .notAcceptable, .proxyAuthenticationRequired, .requestTimeout, .conflict, .gone,
+            .lengthRequired, .preconditionFailed, .payloadTooLarge, .uriTooLong, .unsupportedMediaType,
+            .rangeNotSatisfiable, .expectationFailed, .imATeapot, .misdirectedRequest, .unprocessableEntity,
+            .locked, .failedDependency, .upgradeRequired, .preconditionRequired, .tooManyRequests,
+            .requestHeaderFieldsTooLarge, .unavailableForLegalReasons:
+            return false
+        default:
+            break
+        }
+
+        let nonRetryablePatterns = [
+            // Metadata and configuration errors
+            "write metadata",
+            "locale failed",
+            "ExifTool",
+            "metadata with multi PDF engines",
+            "error during unmarshaling",
+            // Chromium rendering errors
+            "chromium console exceptions",
+            "chromium fails to load",
+            "exception \"uncaught\"",
+            "fails to load at least one resource",
+            // Resource loading failures
+            "resource loading failed",
+            "failed to load resource",
+            "network error loading",
+            // PDF processing errors that won't resolve with retry
+            "pdf corruption",
+            "invalid pdf structure",
+            "unsupported pdf version",
+        ]
+
+        return !nonRetryablePatterns.contains { pattern in
+            errorMessage.localizedCaseInsensitiveContains(pattern)
+        }
+    }
+
     /// Sends an HTTP client request to Gotenberg. The request will be retried depending on the response status code.
     /// - Parameters:
     ///   - request: The API route to send the request to
@@ -200,7 +246,7 @@ public struct GotenbergClient: Sendable {
         switch response.status {
         case .ok, .noContent:
             return response
-        case .gatewayTimeout, .tooManyRequests, .serviceUnavailable, .requestTimeout, .internalServerError:  // Retry-able status
+        case .gatewayTimeout, .tooManyRequests, .serviceUnavailable, .requestTimeout:  // Retry-able network/load status
             let retryCount = currentRetryCount + 1
             if retryCount < maxRetries {
                 let delayTime = min(exp2(Double(retryCount)), 30)
@@ -212,6 +258,45 @@ public struct GotenbergClient: Sendable {
             }
 
             throw GotenbergError.apiError(statusCode: response.status.code, message: "Exhausted retry attempts")
+        case .internalServerError:  // Check if it's a retryable 500 error
+            let errorData = try await response.body.collect(upTo: 1024 * 1024 * 8)
+            let errorMessage = String(buffer: errorData)
+
+            // Check if this is a retryable server error
+            if !isRetryableServerError(status: response.status, errorMessage: errorMessage) {
+                logger.error(
+                    "Gotenberg API non-retryable server error",
+                    metadata: [
+                        "statusCode": "\(response.status.code)",
+                        "message": .string(errorMessage),
+                    ]
+                )
+                throw GotenbergError.apiError(statusCode: response.status.code, message: errorMessage)
+            }
+
+            // For retryable 500 errors, retry with exponential backoff
+            let retryCount = currentRetryCount + 1
+            if retryCount < maxRetries {
+                let delayTime = min(exp2(Double(retryCount)), 30)
+                let jitter = Double.random(in: 0.1...0.5)
+                let delay = delayTime * (1 + jitter)
+                logger.debug("Gotenberg API returned retryable \(response.status), retrying in \(delay) seconds with attempt count... \(retryCount)")
+                try await Task.sleep(for: .seconds(delay))
+                return try await sendRequestWithRetry(request, timeoutSeconds: timeoutSeconds, currentRetryCount: retryCount)
+            }
+
+            throw GotenbergError.apiError(statusCode: response.status.code, message: "Exhausted retry attempts for server error: \(errorMessage)")
+        case .conflict:  // 409 Conflict - typically from Chromium resource loading failures
+            let errorData = try await response.body.collect(upTo: 1024 * 1024 * 8)
+            let errorMessage = String(buffer: errorData)
+            logger.error(
+                "Gotenberg API conflict error (not retryable)",
+                metadata: [
+                    "statusCode": "\(response.status.code)",
+                    "message": .string(errorMessage),
+                ]
+            )
+            throw GotenbergError.apiError(statusCode: response.status.code, message: errorMessage)
         default:  // Any non-success, non-retryable status
             let errorData = try await response.body.collect(upTo: 1024 * 1024 * 8)  // 8 MB of error response gotta be enough...
             let errorMessage = String(buffer: errorData)
@@ -464,4 +549,5 @@ public struct GotenbergClient: Sendable {
     public static func isFileSupported(_ contentTypeOrPath: String) -> Bool {
         isLibreOfficeSupportedFormat(contentTypeOrPath) || isFileSupportedFromContentType(contentTypeOrPath)
     }
+
 }
