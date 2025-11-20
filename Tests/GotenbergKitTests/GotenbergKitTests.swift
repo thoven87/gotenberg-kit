@@ -1,3 +1,10 @@
+//
+//  GotenbergKitTests.swift
+//  gotenberg-kit
+//
+//  Created by Stevenson Michel on 4/11/25.
+//
+
 import AsyncHTTPClient
 import Foundation
 import Logging
@@ -80,8 +87,8 @@ struct GokenbergKitTests {
             """
 
         let cssContent = """
-            body { 
-                font-family: 'Helvetica', sans-serif; 
+            body {
+                font-family: 'Helvetica', sans-serif;
                 margin: 0;
                 padding: 20px;
                 color: #333;
@@ -94,7 +101,7 @@ struct GokenbergKitTests {
                 border-radius: 5px;
             }
             h1 { color: #2c3e50; text-align: center; }
-            .logo { 
+            .logo {
                 display: block;
                 max-width: 200px;
                 margin: 20px auto;

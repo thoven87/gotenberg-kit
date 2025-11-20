@@ -15,7 +15,8 @@ A modern Swift SDK for [Gotenberg](https://gotenberg.dev/) that provides a type-
 - 📄 **Multiple input formats** (HTML, Markdown, URLs, Office docs)
 - 🖼️ **Screenshot capture** from web pages
 - 📋 **PDF manipulation** (merge, split, metadata)
-- 🔐 **Authentication support** (Basic Auth + custom headers)
+- 🔐 **PDF encryption** (during conversion + dedicated endpoint)
+- 🔑 **Authentication support** (Basic Auth + custom headers)
 - 📱 **Cross-platform** (iOS, macOS, Linux, Windows)
 
 ## Quick Start
@@ -174,7 +175,7 @@ let response = try await client.splitPDF(
 )
 ```
 
-#### PDF Metadata
+### PDF Metadata
 
 Read and write PDF metadata:
 
@@ -195,6 +196,116 @@ let response = try await client.writePDFMetadata(
     ]
 )
 ```
+
+### PDF Encryption
+
+GotenbergKit provides two ways to encrypt PDFs with password protection:
+
+#### 1. Encrypt During Conversion
+
+Add password protection while converting documents to PDF:
+
+```swift
+// Encrypt HTML to PDF with both user and owner passwords
+let options = ConversionOptions(
+    userPassword: "user123",     // Password for opening/viewing the PDF
+    ownerPassword: "owner456"    // Password for full access/editing
+)
+
+let response = try await client.convertHTMLToPDF(
+    htmlContent: "<h1>Confidential Document</h1>",
+    options: options
+)
+
+// Encrypt office documents
+let libreOptions = LibreOfficeConversionOptions(
+    password: "source_password",      // Password for opening source file (if encrypted)
+    userPassword: "view_password",    // Password for viewing output PDF
+    ownerPassword: "edit_password"    // Password for editing output PDF
+)
+
+let response = try await client.convertWithLibreOffice(
+    documents: ["confidential.docx": docData],
+    options: libreOptions
+)
+
+// Encrypt when processing existing PDFs
+let pdfOptions = PDFEngineOptions(
+    userPassword: "reader_access",
+    ownerPassword: "full_access"
+)
+
+let encryptedPDF = try await client.mergeWithPDFEngines(
+    documents: ["file1.pdf": data1, "file2.pdf": data2],
+    options: pdfOptions
+)
+```
+
+#### 2. Encrypt Existing PDFs
+
+Use the dedicated encryption endpoint to add password protection to existing PDF files with full metadata override support:
+
+```swift
+// Basic encryption with passwords only
+let encryptedResponse = try await client.encryptPDFs(
+    documents: [
+        "document1.pdf": try Data(contentsOf: pdf1URL),
+        "document2.pdf": try Data(contentsOf: pdf2URL)
+    ],
+    options: PDFEngineOptions(
+        userPassword: "viewer_password",
+        ownerPassword: "admin_password"  // Optional
+    )
+)
+
+// Encrypt with custom metadata override
+let customMetadata = Metadata(
+    author: "Secure Author",
+    copyright: "Company Confidential",
+    creator: "GotenbergKit",
+    marked: true,
+    producer: "Swift PDF Processor",
+    subject: "Encrypted Document",
+    title: "Confidential Report"
+)
+
+let encryptedWithMetadata = try await client.encryptPDFs(
+    documents: ["report.pdf": reportData],
+    options: PDFEngineOptions(
+        metadata: customMetadata,        // Override metadata during encryption
+        userPassword: "user123",
+        ownerPassword: "owner456",
+        flatten: true,                   // Additional PDF processing options
+        pdfua: true
+    )
+)
+
+// Encrypt PDFs from URLs
+let pdfURLs = [
+    DownloadFrom(url: "https://example.com/file1.pdf"),
+    DownloadFrom(url: "https://example.com/file2.pdf")
+]
+
+let encryptedFromURLs = try await client.encryptPDFs(
+    urls: pdfURLs,
+    options: PDFEngineOptions(
+        userPassword: "required_password"
+    )
+)
+```
+
+**Key Features:**
+- **Password Protection**: User password (required) and owner password (optional)
+- **Metadata Override**: Set custom metadata during encryption process
+- **PDF Processing**: Support for flattening, PDF/UA compliance, and format options
+- **Flexible Input**: Encrypt from file data or URLs
+- **Consistent API**: Uses PDFEngineOptions like other PDF operations
+
+**Password Types:**
+- **User Password**: Required to open and view the PDF (required for encryption)
+- **Owner Password**: Required for full access (editing, copying, printing) (optional)
+
+
 
 ### Authentication
 
@@ -269,6 +380,48 @@ let response = try await client.convertHTMLToPDF(
     htmlContent: html,
     options: options,
     timeoutSeconds: 30 // 30 seconds timeout
+)
+```
+
+#### Encryption Best Practices
+
+```swift
+// Use strong, unique passwords for conversion
+let options = ConversionOptions(
+    userPassword: generateSecurePassword(length: 12),
+    ownerPassword: generateSecurePassword(length: 16)
+)
+
+// For dedicated encryption endpoint with metadata control
+let encryptionOptions = PDFEngineOptions(
+    metadata: Metadata(
+        author: "Document Owner",
+        copyright: "Confidential",
+        creator: "Secure App",
+        marked: true,
+        subject: "Encrypted Content",
+        title: "Protected Document"
+    ),
+    userPassword: generateSecurePassword(length: 12),
+    ownerPassword: generateSecurePassword(length: 16),
+    flatten: true  // Prevent form modifications
+)
+
+// User password only (allows viewing)
+let viewOnlyOptions = PDFEngineOptions(
+    userPassword: "view_password"
+)
+
+// Both passwords for maximum control
+let secureOptions = PDFEngineOptions(
+    userPassword: "user_access",    // Required to open
+    ownerPassword: "admin_access"   // Full permissions
+)
+
+// Apply encryption to existing PDFs
+let encrypted = try await client.encryptPDFs(
+    documents: ["sensitive.pdf": pdfData],
+    options: encryptionOptions
 )
 ```
 
