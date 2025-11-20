@@ -20,6 +20,7 @@ public enum GotenbergError: Error {
     case paperHeightTooSmall
     case marginTooSmall
     case pageRangeInvalid
+    case missingRequiredParameter(String)
 
     public var errorDescription: String {
         switch self {
@@ -45,6 +46,8 @@ public enum GotenbergError: Error {
             return "Margin must be at least 0 inches"
         case .pageRangeInvalid:
             return "Page range must be in format start-end abd with positive integers for start and end and start <= end."
+        case .missingRequiredParameter(let parameter):
+            return "Missing required parameter: \(parameter)"
         }
     }
 }

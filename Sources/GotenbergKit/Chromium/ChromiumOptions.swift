@@ -107,6 +107,10 @@ public struct ChromiumOptions: Sendable {
     public var metadata: Metadata?
     /// Tags provide a logical structure that governs how the content of the PDF is presented through assistive technology
     public var generateTaggedPdf: Bool
+    /// Password for opening the resulting PDF
+    public var userPassword: String?
+    /// Password for full access on the resulting PDF
+    public var ownerPassword: String?
 
     private let logger = Logger(label: "com.gotenbergkit.chromiumoptions")
 
@@ -142,7 +146,9 @@ public struct ChromiumOptions: Sendable {
         pdfFormat: PDFFormat? = nil,
         pdfua: Bool = false,
         metadata: Metadata? = nil,
-        generateTaggedPdf: Bool = false
+        generateTaggedPdf: Bool = false,
+        userPassword: String? = nil,
+        ownerPassword: String? = nil
     ) {
         self.singlePage = singlePage
         self.paperWidth = paperWidth
@@ -176,6 +182,8 @@ public struct ChromiumOptions: Sendable {
         self.pdfua = pdfua
         self.metadata = metadata
         self.generateTaggedPdf = generateTaggedPdf
+        self.userPassword = userPassword
+        self.ownerPassword = ownerPassword
     }
 
     var formValues: [String: String] {
@@ -279,6 +287,14 @@ public struct ChromiumOptions: Sendable {
                     ]
                 )
             }
+        }
+
+        if let userPassword = userPassword {
+            values["userPassword"] = userPassword
+        }
+
+        if let ownerPassword = ownerPassword {
+            values["ownerPassword"] = ownerPassword
         }
 
         return values

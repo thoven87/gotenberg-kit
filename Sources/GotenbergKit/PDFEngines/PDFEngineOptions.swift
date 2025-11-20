@@ -18,6 +18,10 @@ public struct PDFEngineOptions: Sendable {
     public var pdfua: Bool = false
     /// PDF Format
     public var format: PDFFormat?
+    /// Password for opening the resulting PDF
+    public var userPassword: String?
+    /// Password for full access on the resulting PDF
+    public var ownerPassword: String?
 
     private let logger = Logger(label: "PDFEngineOptions")
 
@@ -25,12 +29,16 @@ public struct PDFEngineOptions: Sendable {
         metadata: Metadata? = nil,
         flatten: Bool = false,
         pdfa: Bool = false,
-        format: PDFFormat? = nil
+        format: PDFFormat? = nil,
+        userPassword: String? = nil,
+        ownerPassword: String? = nil
     ) {
         self.metadata = metadata
         self.flatten = flatten
         self.pdfua = pdfa
         self.format = format
+        self.userPassword = userPassword
+        self.ownerPassword = ownerPassword
     }
 
     var formValues: [String: String] {
@@ -58,6 +66,14 @@ public struct PDFEngineOptions: Sendable {
                     ]
                 )
             }
+        }
+
+        if let userPassword = userPassword {
+            values["userPassword"] = userPassword
+        }
+
+        if let ownerPassword = ownerPassword {
+            values["ownerPassword"] = ownerPassword
         }
 
         return values

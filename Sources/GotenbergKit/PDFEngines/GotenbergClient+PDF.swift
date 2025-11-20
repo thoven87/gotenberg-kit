@@ -530,4 +530,103 @@ extension GotenbergClient {
             timeoutSeconds: Int64(waitTimeout)
         )
     }
+
+    /// Encrypt PDF files with password protection
+    /// - Parameters:
+    ///   - documents: Dictionary of PDF file data to be encrypted
+    ///   - options: PDFEngineOptions including passwords and metadata
+    ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
+    /// - Returns: GotenbergResponse containing the encrypted PDF(s)
+    public func encryptPDFs(
+        documents: [String: Data],
+        options: PDFEngineOptions = PDFEngineOptions(),
+        waitTimeout: TimeInterval = 120,
+        clientHTTPHeaders: [String: String] = [:]
+    ) async throws -> GotenbergResponse {
+        guard !documents.isEmpty else {
+            throw GotenbergError.noPDFsProvided
+        }
+
+        guard options.userPassword != nil else {
+            throw GotenbergError.missingRequiredParameter("userPassword is required for encryption")
+        }
+
+        logger.debug("Encrypting \(documents.count) PDF(s) with password protection")
+
+        // Create request with PDF files
+        var files: [FormFile] = []
+        for (filename, data) in documents {
+            files.append(
+                FormFile(
+                    name: "files",
+                    filename: filename,
+                    contentType: contentTypeForFilename(filename),
+                    data: data
+                )
+            )
+            logger.debug("Encrypting \(filename)")
+            logger.debug("Document size: \(data.count) bytes")
+        }
+
+        // Create form values from options
+        let values = options.formValues
+
+        // Send request to Gotenberg encrypt route
+        return try await sendFormRequest(
+            route: "/forms/pdfengines/encrypt",
+            files: files,
+            values: values,
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
+        )
+    }
+
+    /// Encrypt PDF files from URLs with password protection
+    /// - Parameters:
+    ///   - urls: Array of DownloadFrom objects containing PDF URLs
+    ///   - options: PDFEngineOptions including passwords and metadata
+    ///   - waitTimeout: Timeout in seconds for the Gotenberg server
+    ///   - clientHTTPHeaders: Custom headers for GotenbergKit
+    /// - Returns: GotenbergResponse containing the encrypted PDF(s)
+    public func encryptPDFs(
+        urls: [DownloadFrom],
+        options: PDFEngineOptions = PDFEngineOptions(),
+        waitTimeout: TimeInterval = 120,
+        clientHTTPHeaders: [String: String] = [:]
+    ) async throws -> GotenbergResponse {
+        guard !urls.isEmpty else {
+            throw GotenbergError.noPDFsProvided
+        }
+
+        guard options.userPassword != nil else {
+            throw GotenbergError.missingRequiredParameter("userPassword is required for encryption")
+        }
+
+        logger.debug("Encrypting \(urls.count) PDF(s) from URLs with password protection")
+
+        logger.debug("Encrypting \(urls.count) PDFs from URLs using downloadFrom parameter")
+
+        // Convert to JSON
+        let jsonData = try JSONEncoder().encode(urls)
+        let jsonString = String(decoding: jsonData, as: UTF8.self)
+
+        // Create form values from options and add URLs
+        var values = options.formValues
+        values["downloadFrom"] = jsonString
+
+        for downloadFrom in urls {
+            logger.debug("Encrypting PDF from URL: \(downloadFrom.url)")
+        }
+
+        // Send request to Gotenberg encrypt route
+        return try await sendFormRequest(
+            route: "/forms/pdfengines/encrypt",
+            files: [],
+            values: values,
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
+        )
+    }
+
 }

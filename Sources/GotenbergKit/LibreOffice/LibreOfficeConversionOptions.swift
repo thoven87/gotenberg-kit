@@ -94,6 +94,10 @@ public struct LibreOfficeConversionOptions {
     /// Flatten the resulting PDF.
     /// default false
     public var flatten: Bool
+    /// Password for opening the resulting PDF
+    public var userPassword: String?
+    /// Password for full access on the resulting PDF
+    public var ownerPassword: String?
 
     public struct PageRange {
         public let from: Int
@@ -145,7 +149,9 @@ public struct LibreOfficeConversionOptions {
         pdfFormat: PDFFormat? = nil,
         pdfua: Bool = false,
         metadata: Metadata? = nil,
-        flatten: Bool = false
+        flatten: Bool = false,
+        userPassword: String? = nil,
+        ownerPassword: String? = nil
     ) {
         self.password = password
         self.landscape = landscape
@@ -177,6 +183,8 @@ public struct LibreOfficeConversionOptions {
         self.pdfua = pdfua
         self.metadata = metadata
         self.flatten = flatten
+        self.userPassword = userPassword
+        self.ownerPassword = ownerPassword
     }
 
     /// Convert options to form values for the API request
@@ -258,12 +266,20 @@ public struct LibreOfficeConversionOptions {
                 values["metadata"] = String(decoding: data, as: UTF8.self)
             } catch {
                 logger.error(
-                    "Error serializing metadata",
+                    "Failed to serialize metadata",
                     metadata: [
                         "error": .string(error.localizedDescription)
                     ]
                 )
             }
+        }
+
+        if let userPassword = userPassword {
+            values["userPassword"] = userPassword
+        }
+
+        if let ownerPassword = ownerPassword {
+            values["ownerPassword"] = ownerPassword
         }
 
         return values
