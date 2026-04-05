@@ -15,8 +15,7 @@ public struct LibreOfficeConversionOptions {
     /// Set the password for opening the source file.
     public var password: String?
     /// Set the paper orientation to landscape.
-    /// Default false
-    public var landscape: Bool
+    public var landscape: Bool?
     /// Page ranges to print, e.g., '1-4' - empty means all pages.
     public var nativePageRanges: PageRange?
     //// Specify whether to update the indexes before conversion, keeping in mind that doing so might result in missing links in the final PDF.
@@ -124,7 +123,7 @@ public struct LibreOfficeConversionOptions {
     /// Initialize with default values
     public init(
         password: String? = nil,
-        landscape: Bool = false,
+        landscape: Bool? = nil,
         nativePageRanges: PageRange? = nil,
         updateIndexes: Bool = true,
         exportFormFields: Bool = true,
@@ -200,7 +199,9 @@ public struct LibreOfficeConversionOptions {
             values["password"] = password
         }
 
-        values["landscape"] = String(landscape)
+        if let landscape = landscape {
+            values["landscape"] = String(landscape)
+        }
 
         if let nativePageRanges = nativePageRanges {
             values["nativePageRanges"] = "\(nativePageRanges.from)-\(nativePageRanges.to)"
