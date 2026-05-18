@@ -754,3 +754,403 @@ extension GotenbergClient {
     }
 
 }
+
+// MARK: - Write Bookmarks
+
+extension GotenbergClient {
+
+    /// Write a bookmark outline into one or more PDF files.
+    ///
+    /// Route: POST /forms/pdfengines/bookmarks/write
+    ///
+    /// Pass a flat list of `PDFBookmark` to apply the same outline to every uploaded
+    /// file, or pass a `[String: [PDFBookmark]]` dictionary to target specific files
+    /// by name using the map form (see `writeBookmarks(documents:bookmarkMap:)`).
+    ///
+    /// - Parameters:
+    ///   - documents: Dictionary of filename → PDF data.
+    ///   - bookmarks: Root-level bookmark array applied to all uploaded files.
+    ///   - waitTimeout: Gotenberg server timeout in seconds.
+    ///   - clientHTTPHeaders: Additional HTTP headers.
+    /// - Returns: The PDF(s) with the bookmark outline written.
+    public func writeBookmarks(
+        documents: [String: Data],
+        bookmarks: [PDFBookmark],
+        waitTimeout: TimeInterval = 120,
+        clientHTTPHeaders: [String: String] = [:]
+    ) async throws -> GotenbergResponse {
+        guard !documents.isEmpty else { throw GotenbergError.noPDFsProvided }
+        let files = documents.map { name, data in
+            FormFile(
+                name: "files",
+                filename: name,
+                contentType: contentTypeForFilename(name),
+                data: data
+            )
+        }
+        let jsonData = try JSONEncoder().encode(bookmarks)
+        let jsonString = String(decoding: jsonData, as: UTF8.self)
+        return try await sendFormRequest(
+            route: "/forms/pdfengines/bookmarks/write",
+            files: files,
+            values: ["bookmarks": jsonString],
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
+        )
+    }
+
+    /// Write per-file bookmark outlines into one or more PDF files.
+    ///
+    /// Route: POST /forms/pdfengines/bookmarks/write
+    ///
+    /// Use the map form when each uploaded file needs a different outline.
+    /// The dictionary keys must match the uploaded filenames exactly.
+    ///
+    /// - Parameters:
+    ///   - documents: Dictionary of filename → PDF data.
+    ///   - bookmarkMap: Filename → bookmark array mapping.
+    ///   - waitTimeout: Gotenberg server timeout in seconds.
+    ///   - clientHTTPHeaders: Additional HTTP headers.
+    /// - Returns: The PDF(s) with the per-file bookmark outlines written.
+    public func writeBookmarks(
+        documents: [String: Data],
+        bookmarkMap: PDFBookmarkMap,
+        waitTimeout: TimeInterval = 120,
+        clientHTTPHeaders: [String: String] = [:]
+    ) async throws -> GotenbergResponse {
+        guard !documents.isEmpty else { throw GotenbergError.noPDFsProvided }
+        let files = documents.map { name, data in
+            FormFile(
+                name: "files",
+                filename: name,
+                contentType: contentTypeForFilename(name),
+                data: data
+            )
+        }
+        let jsonData = try JSONEncoder().encode(bookmarkMap)
+        let jsonString = String(decoding: jsonData, as: UTF8.self)
+        return try await sendFormRequest(
+            route: "/forms/pdfengines/bookmarks/write",
+            files: files,
+            values: ["bookmarks": jsonString],
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
+        )
+    }
+
+    /// Write bookmarks into PDFs downloaded from URLs — flat list form.
+    ///
+    /// Route: POST /forms/pdfengines/bookmarks/write
+    public func writeBookmarks(
+        urls: [DownloadFrom],
+        bookmarks: [PDFBookmark],
+        waitTimeout: TimeInterval = 120,
+        clientHTTPHeaders: [String: String] = [:]
+    ) async throws -> GotenbergResponse {
+        guard !urls.isEmpty else { throw GotenbergError.noURLsProvided }
+        let urlData = try JSONEncoder().encode(urls)
+        let bkData = try JSONEncoder().encode(bookmarks)
+        return try await sendFormRequest(
+            route: "/forms/pdfengines/bookmarks/write",
+            files: [],
+            values: [
+                "downloadFrom": String(decoding: urlData, as: UTF8.self),
+                "bookmarks": String(decoding: bkData, as: UTF8.self),
+            ],
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
+        )
+    }
+}
+
+// MARK: - Read Bookmarks
+
+extension GotenbergClient {
+
+    /// Read the bookmark outline from one or more PDF files.
+    ///
+    /// Route: POST /forms/pdfengines/bookmarks/read
+    ///
+    /// This is a read-only analysis route. It does NOT modify any file.
+    /// The response body is JSON — a `PDFBookmarkMap` keyed by uploaded filename.
+    ///
+    /// - Parameters:
+    ///   - documents: Dictionary of filename → PDF data.
+    ///   - waitTimeout: Gotenberg server timeout in seconds.
+    ///   - clientHTTPHeaders: Additional HTTP headers.
+    /// - Returns: Raw `GotenbergResponse`; decode the body as `PDFBookmarkMap`.
+    public func readBookmarks(
+        documents: [String: Data],
+        waitTimeout: TimeInterval = 60,
+        clientHTTPHeaders: [String: String] = [:]
+    ) async throws -> GotenbergResponse {
+        guard !documents.isEmpty else { throw GotenbergError.noPDFsProvided }
+        let files = documents.map { name, data in
+            FormFile(
+                name: "files",
+                filename: name,
+                contentType: contentTypeForFilename(name),
+                data: data
+            )
+        }
+        return try await sendFormRequest(
+            route: "/forms/pdfengines/bookmarks/read",
+            files: files,
+            values: [:],
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
+        )
+    }
+
+    /// Read bookmarks from PDFs downloaded from URLs.
+    ///
+    /// Route: POST /forms/pdfengines/bookmarks/read
+    ///
+    /// The response body is JSON — a `PDFBookmarkMap` keyed by filename.
+    public func readBookmarks(
+        urls: [DownloadFrom],
+        waitTimeout: TimeInterval = 60,
+        clientHTTPHeaders: [String: String] = [:]
+    ) async throws -> GotenbergResponse {
+        guard !urls.isEmpty else { throw GotenbergError.noURLsProvided }
+        let jsonData = try JSONEncoder().encode(urls)
+        let jsonString = String(decoding: jsonData, as: UTF8.self)
+        return try await sendFormRequest(
+            route: "/forms/pdfengines/bookmarks/read",
+            files: [],
+            values: ["downloadFrom": jsonString],
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
+        )
+    }
+}
+
+// MARK: - Rotate PDFs
+
+extension GotenbergClient {
+
+    /// Rotate pages within one or more PDF files.
+    ///
+    /// Route: POST /forms/pdfengines/rotate
+    ///
+    /// - Parameters:
+    ///   - documents: Dictionary of filename → PDF data.
+    ///   - options: Rotation angle and optional page ranges.
+    ///   - waitTimeout: Gotenberg server timeout in seconds.
+    ///   - clientHTTPHeaders: Additional HTTP headers.
+    /// - Returns: The rotated PDF.
+    public func rotatePDF(
+        documents: [String: Data],
+        options: RotatePDFOptions,
+        waitTimeout: TimeInterval = 120,
+        clientHTTPHeaders: [String: String] = [:]
+    ) async throws -> GotenbergResponse {
+        guard !documents.isEmpty else { throw GotenbergError.noPDFsProvided }
+        let files = documents.map { name, data in
+            FormFile(
+                name: "files",
+                filename: name,
+                contentType: contentTypeForFilename(name),
+                data: data
+            )
+        }
+        return try await sendFormRequest(
+            route: "/forms/pdfengines/rotate",
+            files: files,
+            values: options.formValues,
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
+        )
+    }
+
+    /// Rotate pages within one or more PDF files downloaded from URLs.
+    ///
+    /// Route: POST /forms/pdfengines/rotate
+    public func rotatePDF(
+        urls: [DownloadFrom],
+        options: RotatePDFOptions,
+        waitTimeout: TimeInterval = 120,
+        clientHTTPHeaders: [String: String] = [:]
+    ) async throws -> GotenbergResponse {
+        guard !urls.isEmpty else { throw GotenbergError.noURLsProvided }
+        let jsonData = try JSONEncoder().encode(urls)
+        let jsonString = String(decoding: jsonData, as: UTF8.self)
+        var values = options.formValues
+        values["downloadFrom"] = jsonString
+        return try await sendFormRequest(
+            route: "/forms/pdfengines/rotate",
+            files: [],
+            values: values,
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
+        )
+    }
+}
+
+// MARK: - Stamp PDFs
+
+extension GotenbergClient {
+
+    /// Stamp (foreground overlay) one or more PDFs with text, an image, or another PDF.
+    ///
+    /// Route: POST /forms/pdfengines/stamp
+    ///
+    /// - Parameters:
+    ///   - documents: Dictionary of filename → PDF data to stamp.
+    ///   - options: Stamp source type, expression, pages, and optional style.
+    ///   - waitTimeout: Gotenberg server timeout in seconds.
+    ///   - clientHTTPHeaders: Additional HTTP headers.
+    /// - Returns: The stamped PDF(s).
+    public func stampPDF(
+        documents: [String: Data],
+        options: OverlayOptions,
+        waitTimeout: TimeInterval = 120,
+        clientHTTPHeaders: [String: String] = [:]
+    ) async throws -> GotenbergResponse {
+        guard !documents.isEmpty else { throw GotenbergError.noPDFsProvided }
+        var files = documents.map { name, data in
+            FormFile(
+                name: "files",
+                filename: name,
+                contentType: contentTypeForFilename(name),
+                data: data
+            )
+        }
+        if let overlay = options.overlayFile {
+            files.append(
+                FormFile(
+                    name: "stampfile",
+                    filename: overlay.filename,
+                    contentType: contentTypeForFilename(overlay.filename),
+                    data: overlay.data
+                )
+            )
+        }
+        return try await sendFormRequest(
+            route: "/forms/pdfengines/stamp",
+            files: files,
+            values: options.formValues(for: "stamp"),
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
+        )
+    }
+
+    /// Stamp PDFs downloaded from URLs.
+    ///
+    /// Route: POST /forms/pdfengines/stamp
+    public func stampPDF(
+        urls: [DownloadFrom],
+        options: OverlayOptions,
+        waitTimeout: TimeInterval = 120,
+        clientHTTPHeaders: [String: String] = [:]
+    ) async throws -> GotenbergResponse {
+        guard !urls.isEmpty else { throw GotenbergError.noURLsProvided }
+        var files: [FormFile] = []
+        if let overlay = options.overlayFile {
+            files.append(
+                FormFile(
+                    name: "stampfile",
+                    filename: overlay.filename,
+                    contentType: contentTypeForFilename(overlay.filename),
+                    data: overlay.data
+                )
+            )
+        }
+        let jsonData = try JSONEncoder().encode(urls)
+        let jsonString = String(decoding: jsonData, as: UTF8.self)
+        var values = options.formValues(for: "stamp")
+        values["downloadFrom"] = jsonString
+        return try await sendFormRequest(
+            route: "/forms/pdfengines/stamp",
+            files: files,
+            values: values,
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
+        )
+    }
+}
+
+// MARK: - Watermark PDFs
+
+extension GotenbergClient {
+
+    /// Watermark (background underlay) one or more PDFs with text, an image, or another PDF.
+    ///
+    /// Route: POST /forms/pdfengines/watermark
+    ///
+    /// Key distinction from stamp: the watermark is rendered **behind** page content.
+    ///
+    /// - Parameters:
+    ///   - documents: Dictionary of filename → PDF data to watermark.
+    ///   - options: Watermark source type, expression, pages, and optional style.
+    ///   - waitTimeout: Gotenberg server timeout in seconds.
+    ///   - clientHTTPHeaders: Additional HTTP headers.
+    /// - Returns: The watermarked PDF(s).
+    public func watermarkPDF(
+        documents: [String: Data],
+        options: OverlayOptions,
+        waitTimeout: TimeInterval = 120,
+        clientHTTPHeaders: [String: String] = [:]
+    ) async throws -> GotenbergResponse {
+        guard !documents.isEmpty else { throw GotenbergError.noPDFsProvided }
+        var files = documents.map { name, data in
+            FormFile(
+                name: "files",
+                filename: name,
+                contentType: contentTypeForFilename(name),
+                data: data
+            )
+        }
+        if let overlay = options.overlayFile {
+            files.append(
+                FormFile(
+                    name: "watermarkfile",
+                    filename: overlay.filename,
+                    contentType: contentTypeForFilename(overlay.filename),
+                    data: overlay.data
+                )
+            )
+        }
+        return try await sendFormRequest(
+            route: "/forms/pdfengines/watermark",
+            files: files,
+            values: options.formValues(for: "watermark"),
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
+        )
+    }
+
+    /// Watermark PDFs downloaded from URLs.
+    ///
+    /// Route: POST /forms/pdfengines/watermark
+    public func watermarkPDF(
+        urls: [DownloadFrom],
+        options: OverlayOptions,
+        waitTimeout: TimeInterval = 120,
+        clientHTTPHeaders: [String: String] = [:]
+    ) async throws -> GotenbergResponse {
+        guard !urls.isEmpty else { throw GotenbergError.noURLsProvided }
+        var files: [FormFile] = []
+        if let overlay = options.overlayFile {
+            files.append(
+                FormFile(
+                    name: "watermarkfile",
+                    filename: overlay.filename,
+                    contentType: contentTypeForFilename(overlay.filename),
+                    data: overlay.data
+                )
+            )
+        }
+        let jsonData = try JSONEncoder().encode(urls)
+        let jsonString = String(decoding: jsonData, as: UTF8.self)
+        var values = options.formValues(for: "watermark")
+        values["downloadFrom"] = jsonString
+        return try await sendFormRequest(
+            route: "/forms/pdfengines/watermark",
+            files: files,
+            values: values,
+            headers: clientHTTPHeaders,
+            timeoutSeconds: Int64(waitTimeout)
+        )
+    }
+}

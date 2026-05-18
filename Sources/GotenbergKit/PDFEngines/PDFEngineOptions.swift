@@ -11,6 +11,10 @@ import Logging
 import class Foundation.JSONEncoder
 
 public struct PDFEngineOptions: Sendable {
+    /// Password to open (decrypt) the source PDF.
+    /// Required when the input document is password-protected.
+    /// This is the read password on the source file, not the output password.
+    public var password: String?
     /// The metadata to write
     public var metadata: Metadata?
     /// Flatten the resulting PDF
@@ -29,6 +33,7 @@ public struct PDFEngineOptions: Sendable {
     private let logger = Logger(label: "PDFEngineOptions")
 
     public init(
+        password: String? = nil,
         metadata: Metadata? = nil,
         flatten: Bool = false,
         pdfa: Bool = false,
@@ -37,6 +42,7 @@ public struct PDFEngineOptions: Sendable {
         ownerPassword: String? = nil,
         embeds: [String: Data] = [:]
     ) {
+        self.password = password
         self.metadata = metadata
         self.flatten = flatten
         self.pdfua = pdfa
@@ -48,6 +54,10 @@ public struct PDFEngineOptions: Sendable {
 
     var formValues: [String: String] {
         var values: [String: String] = [:]
+
+        if let password = password {
+            values["password"] = password
+        }
 
         values["flatten"] = flatten ? "true" : "false"
         values["pdfua"] = pdfua ? "true" : "false"
