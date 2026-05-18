@@ -69,9 +69,20 @@ public struct WebhookConfiguration: Sendable {
     public var method: CallbackMethod
 
     /// URL for error callbacks.
-    /// - Note: Deprecated — prefer `eventsUrl` for error handling.
+    ///
+    /// - Deprecated: Use ``eventsUrl`` instead. Gotenberg replaced the separate error
+    ///   callback URL with the unified `Gotenberg-Webhook-Events-Url` mechanism.
+    ///   If `errorUrl` is set and `eventsUrl` is not, the value is automatically
+    ///   promoted to `eventsUrl` so the header is still sent correctly.
     @available(*, deprecated, message: "Use eventsUrl instead")
-    public var errorUrl: String?
+    public var errorUrl: String? {
+        get { _errorUrl }
+        set { _errorUrl = newValue }
+    }
+
+    /// Private backing store so `asHeaders()` can read the value without
+    /// triggering the deprecation warning on itself.
+    private var _errorUrl: String?
 
     /// HTTP method used for the error callback. Default `.post`.
     public var errorMethod: CallbackMethod
@@ -112,13 +123,12 @@ public struct WebhookConfiguration: Sendable {
         headers["Gotenberg-Webhook-Method"] = method.rawValue
         headers["Gotenberg-Webhook-Error-Method"] = errorMethod.rawValue
 
-        if let eventsUrl = eventsUrl {
-            headers["Gotenberg-Webhook-Events-Url"] = eventsUrl
-        }
-
-        // errorUrl is deprecated but still sent if set
-        if let errorUrl = errorUrl {
-            headers["Gotenberg-Webhook-Error-Url"] = errorUrl
+        // If eventsUrl is set, use it. If only errorUrl was set (deprecated),
+        // promote it to eventsUrl — Gotenberg replaced the separate error URL
+        // with the unified Events-Url mechanism.
+        let effectiveEventsUrl = eventsUrl ?? _errorUrl
+        if let url = effectiveEventsUrl {
+            headers["Gotenberg-Webhook-Events-Url"] = url
         }
 
         if let extra = extraHttpHeaders, !extra.isEmpty {
