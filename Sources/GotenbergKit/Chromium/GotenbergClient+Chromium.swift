@@ -81,6 +81,9 @@ extension GotenbergClient {
         let embedFiles = processEmbedFiles(options.embeds)
         files.append(contentsOf: embedFiles)
 
+        // Include any overlay (watermark/stamp) files from options
+        files.append(contentsOf: options.overlayFormFiles)
+
         return try await sendFormRequest(
             route: "/forms/chromium/convert/html",
             files: files,
@@ -141,6 +144,9 @@ extension GotenbergClient {
         // Add embed files
         let embedFiles = processEmbedFiles(options.embeds)
         files.append(contentsOf: embedFiles)
+
+        // Include any overlay (watermark/stamp) files from options
+        files.append(contentsOf: options.overlayFormFiles)
 
         return try await sendFormRequest(
             route: "/forms/chromium/convert/url",
@@ -205,6 +211,9 @@ extension GotenbergClient {
         let embedFiles = processEmbedFiles(options.embeds)
         files.append(contentsOf: embedFiles)
 
+        // Include any overlay (watermark/stamp) files from options
+        files.append(contentsOf: options.overlayFormFiles)
+
         return try await sendFormRequest(
             route: "/forms/chromium/convert/html",
             files: files,
@@ -268,6 +277,9 @@ extension GotenbergClient {
         let embedFiles = processEmbedFiles(options.embeds)
         files.append(contentsOf: embedFiles)
 
+        // Include any overlay (watermark/stamp) files from options
+        files.append(contentsOf: options.overlayFormFiles)
+
         return try await sendFormRequest(
             route: "/forms/chromium/convert/markdown",
             files: files,
@@ -329,6 +341,9 @@ extension GotenbergClient {
         // Add embed files
         let embedFiles = processEmbedFiles(options.embeds)
         formFiles.append(contentsOf: embedFiles)
+
+        // Include any overlay (watermark/stamp) files from options
+        formFiles.append(contentsOf: options.overlayFormFiles)
 
         return try await sendFormRequest(
             route: "/forms/chromium/convert/markdown",

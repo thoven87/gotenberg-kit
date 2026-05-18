@@ -53,6 +53,9 @@ extension GotenbergClient {
         let embedFiles = processEmbedFiles(options.embeds)
         files.append(contentsOf: embedFiles)
 
+        // Include any overlay (watermark/stamp) files from options
+        files.append(contentsOf: options.overlayFormFiles)
+
         let values = options.formValues
 
         return try await sendFormRequest(

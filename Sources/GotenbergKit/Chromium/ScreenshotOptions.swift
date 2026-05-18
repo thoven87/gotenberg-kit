@@ -50,6 +50,17 @@ public struct ScreenshotOptions: Sendable {
     public var emulatedMediaType: EmulatedMediaType?
     /// Cookies to be written
     public var cookies: [Cookie]?
+    /// CSS selector to wait for before capturing. More reliable than waitDelay.
+    public var waitForSelector: String?
+    /// When false, waits until at most 2 connections persist for 500ms before capture.
+    /// Default true
+    public var skipNetworkAlmostIdleEvent: Bool
+    /// Hostnames excluded from failOnResourceHttpStatusCodes checks.
+    /// Default empty
+    public var ignoreResourceHttpStatusDomains: [String]
+    /// CSS media feature overrides (e.g. dark mode, reduced motion).
+    /// Serialised as JSON array of {name, value} objects.
+    public var emulatedMediaFeatures: [EmulatedMediaFeature]?
     /// Return a 409 Conflict response if the HTTP status code from at least one resource is not acceptable.
     public var failOnResourceHttpStatusCodes: [Int]
     /// Return a 409 Conflict response if the HTTP status code from the main page is not acceptable.
@@ -90,7 +101,11 @@ public struct ScreenshotOptions: Sendable {
         failOnResourceHttpStatusCodes: [Int] = [],
         failOnConsoleExceptions: Bool = false,
         skipNetworkIdleEvent: Bool = true,
-        failOnResourceLoadingFailed: Bool = false
+        failOnResourceLoadingFailed: Bool = false,
+        waitForSelector: String? = nil,
+        skipNetworkAlmostIdleEvent: Bool = true,
+        ignoreResourceHttpStatusDomains: [String] = [],
+        emulatedMediaFeatures: [EmulatedMediaFeature]? = nil
     ) {
         self.format = format
         self.quality = quality
@@ -110,6 +125,10 @@ public struct ScreenshotOptions: Sendable {
         self.skipNetworkIdleEvent = skipNetworkIdleEvent
         self.failOnResourceLoadingFailed = failOnResourceLoadingFailed
         self.cookies = cookies
+        self.waitForSelector = waitForSelector
+        self.skipNetworkAlmostIdleEvent = skipNetworkAlmostIdleEvent
+        self.ignoreResourceHttpStatusDomains = ignoreResourceHttpStatusDomains
+        self.emulatedMediaFeatures = emulatedMediaFeatures
     }
 
     var formValues: [String: String] {
@@ -182,6 +201,36 @@ public struct ScreenshotOptions: Sendable {
 
         if let emulatedMediaType = emulatedMediaType {
             values["emulatedMediaType"] = emulatedMediaType.rawValue
+        }
+
+        if let waitForSelector = waitForSelector {
+            values["waitForSelector"] = waitForSelector
+        }
+
+        values["skipNetworkAlmostIdleEvent"] = String(skipNetworkAlmostIdleEvent)
+
+        if !ignoreResourceHttpStatusDomains.isEmpty {
+            do {
+                let data = try JSONEncoder().encode(ignoreResourceHttpStatusDomains)
+                values["ignoreResourceHttpStatusDomains"] = String(decoding: data, as: UTF8.self)
+            } catch {
+                logger.error(
+                    "Failed to serialize ignoreResourceHttpStatusDomains",
+                    metadata: ["error": "\(error)"]
+                )
+            }
+        }
+
+        if let features = emulatedMediaFeatures, !features.isEmpty {
+            do {
+                let data = try JSONEncoder().encode(features)
+                values["emulatedMediaFeatures"] = String(decoding: data, as: UTF8.self)
+            } catch {
+                logger.error(
+                    "Failed to serialize emulatedMediaFeatures",
+                    metadata: ["error": "\(error)"]
+                )
+            }
         }
 
         return values

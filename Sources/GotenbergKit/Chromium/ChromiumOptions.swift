@@ -115,6 +115,53 @@ public struct ChromiumOptions: Sendable {
     /// Files to embed in the generated PDF (for ZUGFeRD/Factur-X compliance)
     public var embeds: [String: Data]
 
+    // ── Browser wait ────────────────────────────────────────────────────────
+    /// CSS selector to wait for before converting. Gotenberg waits until the
+    /// matching DOM element appears. More reliable than waitDelay.
+    /// Example: "#app-ready"
+    public var waitForSelector: String?
+
+    // ── Network idle ─────────────────────────────────────────────────────────
+    /// When false, waits until at most 2 open connections persist for 500ms.
+    /// Practical middle ground between skipNetworkIdleEvent and instant capture.
+    /// Default true
+    public var skipNetworkAlmostIdleEvent: Bool
+
+    // ── Resource status code filtering ──────────────────────────────────────
+    /// Hostnames excluded from failOnResourceHttpStatusCodes checks.
+    /// Accepts: "example.com", "*.example.com", ".example.com"
+    /// Scheme, path, and port are ignored.
+    /// Default empty (no exclusions)
+    public var ignoreResourceHttpStatusDomains: [String]
+
+    // ── CSS media features ────────────────────────────────────────────────────
+    /// CSS media feature overrides, e.g. force dark mode or reduced motion.
+    /// Serialised as a JSON array of {name, value} objects.
+    public var emulatedMediaFeatures: [EmulatedMediaFeature]?
+
+    // ── Attachment metadata ──────────────────────────────────────────────────
+    /// Per-file attachment metadata keyed by filename.
+    /// Required by QPDF for PDF/A-3 and Factur-X/ZUGFeRD compliance.
+    /// Keys must match filenames in the `embeds` dictionary.
+    public var embedsMetadata: [String: EmbedAttachmentMetadata]?
+
+    // ── Post-processing flatten ───────────────────────────────────────────────
+    /// Flatten all interactive form fields into static content after conversion.
+    /// Default false
+    public var flatten: Bool
+
+    // ── Post-processing overlays (PDF engine after Chromium converts) ────────
+    /// Apply a watermark (rendered BEHIND page content) via the PDF engine.
+    /// The overlay file (for .image / .pdf source types) is uploaded separately.
+    public var watermark: OverlayOptions?
+
+    /// Apply a stamp (rendered ON TOP OF page content) via the PDF engine.
+    /// The overlay file (for .image / .pdf source types) is uploaded separately.
+    public var stamp: OverlayOptions?
+
+    /// Rotate pages via the PDF engine after conversion.
+    public var rotate: RotatePDFOptions?
+
     private let logger = Logger(label: "com.gotenbergkit.chromiumoptions")
 
     public init(
@@ -136,7 +183,7 @@ public struct ChromiumOptions: Sendable {
         waitForExpression: String? = nil,
         emulatedMediaType: EmulatedMediaType = .print,
         cookies: [Cookie]? = nil,
-        userAgent: String = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36",
+        userAgent: String? = nil,
         extraHttpHeaders: [String: String]? = nil,
         failOnHttpStatusCodes: [Int] = [499, 599],
         failOnResourceHttpStatusCodes: [Int] = [],
@@ -152,6 +199,15 @@ public struct ChromiumOptions: Sendable {
         generateTaggedPdf: Bool = false,
         userPassword: String? = nil,
         ownerPassword: String? = nil,
+        waitForSelector: String? = nil,
+        skipNetworkAlmostIdleEvent: Bool = true,
+        ignoreResourceHttpStatusDomains: [String] = [],
+        emulatedMediaFeatures: [EmulatedMediaFeature]? = nil,
+        embedsMetadata: [String: EmbedAttachmentMetadata]? = nil,
+        flatten: Bool = false,
+        watermark: OverlayOptions? = nil,
+        stamp: OverlayOptions? = nil,
+        rotate: RotatePDFOptions? = nil,
         embeds: [String: Data] = [:]
     ) {
         self.singlePage = singlePage
@@ -189,6 +245,51 @@ public struct ChromiumOptions: Sendable {
         self.userPassword = userPassword
         self.ownerPassword = ownerPassword
         self.embeds = embeds
+        self.waitForSelector = waitForSelector
+        self.skipNetworkAlmostIdleEvent = skipNetworkAlmostIdleEvent
+        self.ignoreResourceHttpStatusDomains = ignoreResourceHttpStatusDomains
+        self.emulatedMediaFeatures = emulatedMediaFeatures
+        self.embedsMetadata = embedsMetadata
+        self.flatten = flatten
+        self.watermark = watermark
+        self.stamp = stamp
+        self.rotate = rotate
+    }
+
+    private func mimeType(for filename: String) -> String {
+        let ext = filename.split(separator: ".").last.map(String.init) ?? ""
+        switch ext.lowercased() {
+        case "pdf": return "application/pdf"
+        case "png": return "image/png"
+        case "jpg", "jpeg": return "image/jpeg"
+        case "webp": return "image/webp"
+        default: return "application/octet-stream"
+        }
+    }
+
+    var overlayFormFiles: [FormFile] {
+        var files: [FormFile] = []
+        if let watermark = watermark, let overlay = watermark.overlayFile {
+            files.append(
+                FormFile(
+                    name: "watermark",
+                    filename: overlay.filename,
+                    contentType: mimeType(for: overlay.filename),
+                    data: overlay.data
+                )
+            )
+        }
+        if let stamp = stamp, let overlay = stamp.overlayFile {
+            files.append(
+                FormFile(
+                    name: "stamp",
+                    filename: overlay.filename,
+                    contentType: mimeType(for: overlay.filename),
+                    data: overlay.data
+                )
+            )
+        }
+        return files
     }
 
     var formValues: [String: String] {
@@ -300,6 +401,60 @@ public struct ChromiumOptions: Sendable {
 
         if let ownerPassword = ownerPassword {
             values["ownerPassword"] = ownerPassword
+        }
+
+        if let waitForSelector = waitForSelector {
+            values["waitForSelector"] = waitForSelector
+        }
+
+        values["skipNetworkAlmostIdleEvent"] = String(skipNetworkAlmostIdleEvent)
+
+        if !ignoreResourceHttpStatusDomains.isEmpty {
+            do {
+                let data = try JSONEncoder().encode(ignoreResourceHttpStatusDomains)
+                values["ignoreResourceHttpStatusDomains"] = String(decoding: data, as: UTF8.self)
+            } catch {
+                logger.error(
+                    "Failed to serialize ignoreResourceHttpStatusDomains",
+                    metadata: ["error": .string(error.localizedDescription)]
+                )
+            }
+        }
+
+        if let features = emulatedMediaFeatures, !features.isEmpty {
+            do {
+                let data = try JSONEncoder().encode(features)
+                values["emulatedMediaFeatures"] = String(decoding: data, as: UTF8.self)
+            } catch {
+                logger.error(
+                    "Failed to serialize emulatedMediaFeatures",
+                    metadata: ["error": .string(error.localizedDescription)]
+                )
+            }
+        }
+
+        if let embedsMeta = embedsMetadata, !embedsMeta.isEmpty {
+            do {
+                let data = try JSONEncoder().encode(embedsMeta)
+                values["embedsMetadata"] = String(decoding: data, as: UTF8.self)
+            } catch {
+                logger.error(
+                    "Failed to serialize embedsMetadata",
+                    metadata: ["error": .string(error.localizedDescription)]
+                )
+            }
+        }
+
+        values["flatten"] = String(flatten)
+
+        if let watermark = watermark {
+            values.merge(watermark.formValues(for: "watermark")) { $1 }
+        }
+        if let stamp = stamp {
+            values.merge(stamp.formValues(for: "stamp")) { $1 }
+        }
+        if let rotate = rotate {
+            values.merge(rotate.formValues) { $1 }
         }
 
         return values

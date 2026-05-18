@@ -101,6 +101,98 @@ public struct LibreOfficeConversionOptions {
     /// Files to embed in the generated PDF (for ZUGFeRD/Factur-X compliance)
     public var embeds: [String: Data]
 
+    // ── Sheet layout (Calc/spreadsheets) ─────────────────────────────────────
+    /// Ignore each sheet's paper size, print ranges, and shown/hidden status;
+    /// force every sheet (including hidden sheets) onto exactly one page.
+    /// Default false
+    public var singlePageSheets: Bool
+
+    // ── Native watermarks (LibreOffice — text only, applied during conversion) ─
+    /// Single-line text watermark rendered behind document content during conversion.
+    /// For image/PDF watermarks use the `watermark` post-processing field instead.
+    public var nativeWatermarkText: String?
+
+    /// Watermark text color as a decimal RGB integer. Default 8388223 (light grey).
+    public var nativeWatermarkColor: Int?
+
+    /// Watermark font size in points. 0 = auto-sized. Default 0.
+    public var nativeWatermarkFontHeight: Int?
+
+    /// Watermark rotation in TENTHS of a degree (e.g. 450 = 45°). Default 0.
+    public var nativeWatermarkRotateAngle: Int?
+
+    /// Font name for the watermark. Font must be installed in the Docker image.
+    /// Default "Helvetica"
+    public var nativeWatermarkFontName: String?
+
+    /// Tiled (repeating pattern) text watermark rendered behind document content.
+    public var nativeTiledWatermarkText: String?
+
+    // ── Attachment metadata ───────────────────────────────────────────────────
+    /// Per-file attachment metadata keyed by filename.
+    /// Required by QPDF for PDF/A-3 and Factur-X/ZUGFeRD compliance.
+    /// Keys must match filenames in the `embeds` dictionary.
+    public var embedsMetadata: [String: EmbedAttachmentMetadata]?
+
+    // ── Post-processing overlays (PDF engine after LibreOffice converts) ───────
+    /// Apply a watermark (rendered BEHIND page content) via the PDF engine.
+    public var watermark: OverlayOptions?
+
+    /// Apply a stamp (rendered ON TOP OF page content) via the PDF engine.
+    public var stamp: OverlayOptions?
+
+    /// Rotate pages via the PDF engine after conversion.
+    public var rotate: RotatePDFOptions?
+
+    // ── PDF Viewer Preferences (LibreOffice only) ────────────────────────────
+    /// How the PDF opens in viewer. 0=default, 1=outline visible, 2=thumbnails visible.
+    /// Default 0
+    public var initialView: Int
+
+    /// The page number on which the PDF opens. Default 1.
+    public var initialPage: Int
+
+    /// Initial zoom. 0=default, 1=fit page, 2=fit width, 3=fit visible, 4=use zoom value.
+    /// Default 0
+    public var magnification: Int
+
+    /// Initial zoom percentage; only used when magnification=4. Default 100.
+    public var zoom: Int
+
+    /// Page layout. 0=default, 1=single page, 2=one column, 3=two columns.
+    /// Default 0
+    public var pageLayout: Int
+
+    /// Place the first page on the left in two-column layout. Default false.
+    public var firstPageOnLeft: Bool
+
+    /// Resize the viewer window to the first page's dimensions on open. Default false.
+    public var resizeWindowToInitialPage: Bool
+
+    /// Center the viewer window on screen on open. Default false.
+    public var centerWindow: Bool
+
+    /// Open the PDF in full-screen mode. Default false.
+    public var openInFullScreenMode: Bool
+
+    /// Display document title in the viewer title bar. Default true.
+    public var displayPDFDocumentTitle: Bool
+
+    /// Hide the viewer menu bar. Default false.
+    public var hideViewerMenubar: Bool
+
+    /// Hide the viewer toolbar. Default false.
+    public var hideViewerToolbar: Bool
+
+    /// Hide the viewer window controls. Default false.
+    public var hideViewerWindowControls: Bool
+
+    /// Use slide transition effects in Impress presentations. Default true.
+    public var useTransitionEffects: Bool
+
+    /// Number of bookmark levels visible on open. -1 = all levels. Default -1.
+    public var openBookmarkLevels: Int
+
     public struct PageRange {
         public let from: Int
         public let to: Int
@@ -154,7 +246,33 @@ public struct LibreOfficeConversionOptions {
         flatten: Bool = false,
         userPassword: String? = nil,
         ownerPassword: String? = nil,
-        embeds: [String: Data] = [:]
+        embeds: [String: Data] = [:],
+        singlePageSheets: Bool = false,
+        nativeWatermarkText: String? = nil,
+        nativeWatermarkColor: Int? = nil,
+        nativeWatermarkFontHeight: Int? = nil,
+        nativeWatermarkRotateAngle: Int? = nil,
+        nativeWatermarkFontName: String? = nil,
+        nativeTiledWatermarkText: String? = nil,
+        embedsMetadata: [String: EmbedAttachmentMetadata]? = nil,
+        watermark: OverlayOptions? = nil,
+        stamp: OverlayOptions? = nil,
+        rotate: RotatePDFOptions? = nil,
+        initialView: Int = 0,
+        initialPage: Int = 1,
+        magnification: Int = 0,
+        zoom: Int = 100,
+        pageLayout: Int = 0,
+        firstPageOnLeft: Bool = false,
+        resizeWindowToInitialPage: Bool = false,
+        centerWindow: Bool = false,
+        openInFullScreenMode: Bool = false,
+        displayPDFDocumentTitle: Bool = true,
+        hideViewerMenubar: Bool = false,
+        hideViewerToolbar: Bool = false,
+        hideViewerWindowControls: Bool = false,
+        useTransitionEffects: Bool = true,
+        openBookmarkLevels: Int = -1
     ) {
         self.password = password
         self.landscape = landscape
@@ -189,6 +307,77 @@ public struct LibreOfficeConversionOptions {
         self.userPassword = userPassword
         self.ownerPassword = ownerPassword
         self.embeds = embeds
+        self.singlePageSheets = singlePageSheets
+        self.nativeWatermarkText = nativeWatermarkText
+        self.nativeWatermarkColor = nativeWatermarkColor
+        self.nativeWatermarkFontHeight = nativeWatermarkFontHeight
+        self.nativeWatermarkRotateAngle = nativeWatermarkRotateAngle
+        self.nativeWatermarkFontName = nativeWatermarkFontName
+        self.nativeTiledWatermarkText = nativeTiledWatermarkText
+        self.embedsMetadata = embedsMetadata
+        self.watermark = watermark
+        self.stamp = stamp
+        self.rotate = rotate
+        self.initialView = initialView
+        self.initialPage = initialPage
+        self.magnification = magnification
+        self.zoom = zoom
+        self.pageLayout = pageLayout
+        self.firstPageOnLeft = firstPageOnLeft
+        self.resizeWindowToInitialPage = resizeWindowToInitialPage
+        self.centerWindow = centerWindow
+        self.openInFullScreenMode = openInFullScreenMode
+        self.displayPDFDocumentTitle = displayPDFDocumentTitle
+        self.hideViewerMenubar = hideViewerMenubar
+        self.hideViewerToolbar = hideViewerToolbar
+        self.hideViewerWindowControls = hideViewerWindowControls
+        self.useTransitionEffects = useTransitionEffects
+        self.openBookmarkLevels = openBookmarkLevels
+    }
+
+    /// Returns any overlay (watermark/stamp) files to be included in the
+    /// multipart form alongside the documents being converted.
+    var overlayFormFiles: [FormFile] {
+        var files: [FormFile] = []
+        if let watermark = watermark, let overlay = watermark.overlayFile {
+            let mime: String
+            let ext = (overlay.filename.split(separator: ".").last.map(String.init) ?? "").lowercased()
+            switch ext {
+            case "pdf": mime = "application/pdf"
+            case "png": mime = "image/png"
+            case "jpg", "jpeg": mime = "image/jpeg"
+            case "webp": mime = "image/webp"
+            default: mime = "application/octet-stream"
+            }
+            files.append(
+                FormFile(
+                    name: "watermark",
+                    filename: overlay.filename,
+                    contentType: mime,
+                    data: overlay.data
+                )
+            )
+        }
+        if let stamp = stamp, let overlay = stamp.overlayFile {
+            let mime: String
+            let ext = (overlay.filename.split(separator: ".").last.map(String.init) ?? "").lowercased()
+            switch ext {
+            case "pdf": mime = "application/pdf"
+            case "png": mime = "image/png"
+            case "jpg", "jpeg": mime = "image/jpeg"
+            case "webp": mime = "image/webp"
+            default: mime = "application/octet-stream"
+            }
+            files.append(
+                FormFile(
+                    name: "stamp",
+                    filename: overlay.filename,
+                    contentType: mime,
+                    data: overlay.data
+                )
+            )
+        }
+        return files
     }
 
     /// Convert options to form values for the API request
@@ -287,6 +476,66 @@ public struct LibreOfficeConversionOptions {
         if let ownerPassword = ownerPassword {
             values["ownerPassword"] = ownerPassword
         }
+
+        values["singlePageSheets"] = String(singlePageSheets)
+
+        if let text = nativeWatermarkText {
+            values["nativeWatermarkText"] = text
+        }
+        if let color = nativeWatermarkColor {
+            values["nativeWatermarkColor"] = String(color)
+        }
+        if let fontHeight = nativeWatermarkFontHeight {
+            values["nativeWatermarkFontHeight"] = String(fontHeight)
+        }
+        if let rotateAngle = nativeWatermarkRotateAngle {
+            values["nativeWatermarkRotateAngle"] = String(rotateAngle)
+        }
+        if let fontName = nativeWatermarkFontName {
+            values["nativeWatermarkFontName"] = fontName
+        }
+        if let tiledText = nativeTiledWatermarkText {
+            values["nativeTiledWatermarkText"] = tiledText
+        }
+
+        if let embedsMeta = embedsMetadata, !embedsMeta.isEmpty {
+            do {
+                let data = try JSONEncoder().encode(embedsMeta)
+                values["embedsMetadata"] = String(decoding: data, as: UTF8.self)
+            } catch {
+                logger.error(
+                    "Failed to serialize embedsMetadata",
+                    metadata: ["error": .string(error.localizedDescription)]
+                )
+            }
+        }
+
+        if let watermark = watermark {
+            values.merge(watermark.formValues(for: "watermark")) { $1 }
+        }
+        if let stamp = stamp {
+            values.merge(stamp.formValues(for: "stamp")) { $1 }
+        }
+        if let rotate = rotate {
+            values.merge(rotate.formValues) { $1 }
+        }
+
+        // PDF Viewer Preferences
+        values["initialView"] = String(initialView)
+        values["initialPage"] = String(initialPage)
+        values["magnification"] = String(magnification)
+        values["zoom"] = String(zoom)
+        values["pageLayout"] = String(pageLayout)
+        values["firstPageOnLeft"] = String(firstPageOnLeft)
+        values["resizeWindowToInitialPage"] = String(resizeWindowToInitialPage)
+        values["centerWindow"] = String(centerWindow)
+        values["openInFullScreenMode"] = String(openInFullScreenMode)
+        values["displayPDFDocumentTitle"] = String(displayPDFDocumentTitle)
+        values["hideViewerMenubar"] = String(hideViewerMenubar)
+        values["hideViewerToolbar"] = String(hideViewerToolbar)
+        values["hideViewerWindowControls"] = String(hideViewerWindowControls)
+        values["useTransitionEffects"] = String(useTransitionEffects)
+        values["openBookmarkLevels"] = String(openBookmarkLevels)
 
         return values
     }
