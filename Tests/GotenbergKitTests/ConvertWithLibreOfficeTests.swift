@@ -37,7 +37,12 @@ struct ConvertWithLibreOfficeTests {
 
     @Test
     func convertDocumentFromURL() async throws {
-        let url = "https://data.ny.gov/api/views/j6d2-s8m2/rows.csv?accessType=DOWNLOAD"
+        // Use the CSV already in the test resources via its raw GitHub URL.
+        // data.ny.gov blocks non-browser IPs; GitHub raw is reliably accessible
+        // from CI and returns the file extension in the URL path so Gotenberg
+        // can derive the filename without a Content-Disposition header.
+        let url =
+            "https://raw.githubusercontent.com/thoven87/gotenberg-kit/main/Tests/GotenbergKitTests/Resources/documents/MTA_Subway_Major_Incidents__Beginning_2020.csv"
         let downloadFrom = DownloadFrom(url: url, extraHttpHeaders: nil)
 
         logger.info("Converting CSV to PDF")
@@ -119,11 +124,12 @@ struct ConvertWithLibreOfficeTests {
     func convertAndMergeFromURLs() async throws {
         logger.info("Converting and merging documents from URLs")
 
-        // URLs of documents to convert and merge
-        let documentURLs = [
-            "https://data.ny.gov/api/views/j6d2-s8m2/rows.csv?accessType=DOWNLOAD",
-            "https://data.ny.gov/api/views/j6d2-s8m2/rows.csv?accessType=DOWNLOAD",
-        ].map { DownloadFrom(url: $0) }
+        // Use the CSV already in the test resources via its raw GitHub URL.
+        // data.ny.gov blocks non-browser IPs; this URL is self-contained and
+        // always publicly accessible from CI without rate-limiting or auth.
+        let csvURL =
+            "https://raw.githubusercontent.com/thoven87/gotenberg-kit/main/Tests/GotenbergKitTests/Resources/documents/MTA_Subway_Major_Incidents__Beginning_2020.csv"
+        let documentURLs = [csvURL, csvURL].map { DownloadFrom(url: $0) }
 
         let mergedDocument = try await client.convertWithLibreOffice(
             urls: documentURLs,
